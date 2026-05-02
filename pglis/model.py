@@ -158,7 +158,6 @@ def _in_window(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> bool:
     return _clamp(t, center - half, center + half) == t
 
 
-# ---------------------------------------------------------------------------
 # Polarity sequence helper
 # ---------------------------------------------------------------------------
 def _polarity_weights(time: float):
@@ -298,7 +297,7 @@ class _FluxTable:
 
 
 class _SSNTable:
-    """Loads and interpolates the Smoothed Sunspot Number time series."""
+    """Loads and interpolates the Smoothed Sunspot Number time series downloaded from NOAA."""
 
     def __init__(self, csv_path: str):
         if not os.path.exists(csv_path):
@@ -306,7 +305,6 @@ class _SSNTable:
 
         df = pd.read_csv(csv_path, comment="#")
         df.columns = [c.strip() for c in df.columns]
-        # Expect: time[Unix s], SSN  (or flexible naming)
         t_col = df.columns[0]
         s_col = df.columns[1]
         times = df[t_col].values.astype(float)
@@ -320,11 +318,8 @@ class _SSNTable:
         return float(self._interp(t))
 
 
-# ---------------------------------------------------------------------------
 # Public model class
 # ---------------------------------------------------------------------------
-
-
 class model:
     """
     PGLIS galactic cosmic-ray flux model.
@@ -349,7 +344,7 @@ class model:
         ssn_path = _data_path(self._data_dir, "data_products", "SSN.csv")
         self._ssn = _SSNTable(ssn_path)
 
-        # Cache for loaded flux tables: (Z, polarity) → _FluxTable
+        # Cache for loaded flux tables: (Z, polarity) -> _FluxTable
         self._tables: dict[tuple[int, str], _FluxTable] = {}
 
     # ------------------------------------------------------------------
@@ -381,7 +376,7 @@ class model:
         Parameters
         ----------
         Z : int
-            Atomic number of the species (1–28).
+            Atomic number of the species (1-28).
         Ekn : float
             Kinetic energy per nucleon [MeV/n].
         time : float
@@ -390,7 +385,7 @@ class model:
         Returns
         -------
         float
-            Differential flux J [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²].
+            Differential flux J [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}].
         """
         ssn = self._ssn_at(time)
         w_pos, w_neg = _polarity_weights(time)
@@ -426,7 +421,7 @@ class model:
         Returns
         -------
         np.ndarray
-            Flux values [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²], same length as ``times``.
+            Flux values [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}], same length as ``times``.
         """
         times = np.asarray(times, dtype=float)
         return np.array([self.flux(Z, Ekn, t) for t in times])
@@ -452,16 +447,7 @@ class model:
         Returns
         -------
         np.ndarray
-            Flux values [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²], same length as ``Ekn_arr``.
+            Flux values [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}], same length as ``Ekn_arr``.
         """
         Ekn_arr = np.asarray(Ekn_arr, dtype=float)
         return np.array([self.flux(Z, e, time) for e in Ekn_arr])
-
-    def polarity_at(self, time: float) -> str:
-        """Return a human-readable polarity label for diagnostic purposes."""
-        w_pos, w_neg = _polarity_weights(time)
-        if w_pos == 1.0:
-            return "positive (A>0)"
-        if w_neg == 1.0:
-            return "negative (A<0)"
-        return f"transition (pos={w_pos:.2f}, neg={w_neg:.2f})"
