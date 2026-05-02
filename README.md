@@ -1,6 +1,7 @@
-## The PgLis model 
+<img src="logos.png" alt="PgLis Logo" width="500">
 
-![PgLis Logo](logo.png)
+
+## The PgLis model 
 
 a tool for the long-term forecast of GCR in the heliosphere
 
