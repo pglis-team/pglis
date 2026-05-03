@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pglis
-Version: 1.0
+Version: 1.1
 Summary: PGLIS galactic cosmic-ray flux model
 Requires-Python: >=3.10
 Requires-Dist: numpy>=1.24

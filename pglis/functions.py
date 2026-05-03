@@ -7,7 +7,7 @@ All functions return plain NumPy arrays or a ``pandas.DataFrame``
 
 Example usage
 >>> import pglis
->>> model = pglis.model()
+>>> model = pglis.solar_mod()
 ...
 >>> df = pglis.get_flux_vs_time(
     model,
@@ -31,7 +31,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .model import model
+from .model import solar_mod
 
 # Internal helpers
 
@@ -48,41 +48,35 @@ def _unix_to_datetime(t: float) -> datetime.datetime:
     return datetime.datetime.utcfromtimestamp(t)
 
 
+# Public PgLis API
 # ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
-
 def get_flux_vs_time(
-    model: model,
-    Z: int,
-    Ekn: float,
-    t_start: float,
-    t_end: float,
-    n_points: int = 500,
+    model: solar_mod, Z: int, Ekn: float, t_start: float, t_end: float
 ) -> pd.DataFrame:
     """
     Compute J(t) for a fixed species and kinetic energy over a time range.
 
     Parameters
     ----------
-    model : model
+    model : solar_mod
     Z : int
-        Atomic number (1–28).
+        Atomic number (1-28).
     Ekn : float
         Kinetic energy per nucleon [MeV/n].
     t_start, t_end : float
         Time range as Unix timestamps [s].
-    n_points : int
-        Number of uniformly-spaced time samples.
+
 
     Returns
     -------
     pandas.DataFrame with columns:
-        ``time_unix``     – Unix timestamp [s]
-        ``datetime_utc``  – UTC datetime string (ISO-8601)
-        ``J``             – Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+        time_unix     - Unix timestamp [s]
+        datetime_utc  - UTC datetime string (ISO-8601)
+        J             - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
     """
+    # npoints number of months between t_start and t_end
+    n_points = int((t_end - t_start) / (30 * 24 * 3600)) + 1
+
     times = _linspace_times(t_start, t_end, n_points)
     J = model.flux_vs_time(Z, Ekn, times)
 
@@ -96,7 +90,7 @@ def get_flux_vs_time(
 
 
 def get_flux_vs_energy(
-    model: model,
+    model: solar_mod,
     Z: int,
     time: float,
     Ekn_min: float = 10.0,
@@ -108,9 +102,9 @@ def get_flux_vs_energy(
 
     Parameters
     ----------
-    model : model
+    model : solar_mod
     Z : int
-        Atomic number (1–28).
+        Atomic number (1-28).
     time : float
         Unix timestamp [s].
     Ekn_min, Ekn_max : float
@@ -121,8 +115,8 @@ def get_flux_vs_energy(
     Returns
     -------
     pandas.DataFrame with columns:
-        ``Ekn_MeV_n``  – Kinetic energy per nucleon [MeV/n]
-        ``J``          – Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+        Ekn  - Kinetic energy per nucleon [MeV/n]
+        J    - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
     """
     Ekn_arr = _logspace_energies(Ekn_min, Ekn_max, n_points)
     J = model.flux_vs_energy(Z, Ekn_arr, time)

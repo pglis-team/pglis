@@ -8,6 +8,7 @@ pglis.egg-info/SOURCES.txt
 pglis.egg-info/dependency_links.txt
 pglis.egg-info/requires.txt
 pglis.egg-info/top_level.txt
+pglis/data_products/.zenodo_version
 pglis/data_products/SSN.csv
 pglis/data_products/Aneg/pglis_Aneg_Z01.csv
 pglis/data_products/Aneg/pglis_Aneg_Z02.csv

@@ -200,8 +200,8 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
     Called at import time:
       1. Query Zenodo for the latest version ID.
       2. Compare with the version stored in data_products/.zenodo_version.
-      3. If different (or files missing) → download the full dataset.
-      4. If same → skip entirely.
+      3. If different (or files missing) -> download the full dataset.
+      4. If same -> skip entirely.
     """
     latest = _get_latest_version(verbose=verbose)
     if latest is None:
@@ -245,7 +245,7 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
 def update_ssn(verbose: bool = False) -> bool:
     """
     Download the latest SSN data from NOAA and recreate SSN.csv.
-    Returns True if the update succeeded, False if it failed (e.g. offline).
+    Returns True if the update succeeded, False if it failed.
     The existing SSN.csv is left untouched on failure.
     """
     try:
@@ -282,7 +282,7 @@ def update_ssn(verbose: bool = False) -> bool:
                 f.write(f"{ts:.6e},{ssn:.6g}\n")
 
         if verbose:
-            print(f"[pglis] SSN updated: {len(rows)} points → {_SSN_CSV}")
+            print(f"[pglis] SSN updated: {len(rows)} points -> {_SSN_CSV}")
         return True
 
     except (urllib.error.URLError, OSError, json.JSONDecodeError) as e:
@@ -336,7 +336,7 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(value, hi))
 
 
-def _in_window(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> bool:
+def _in_reversal(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> bool:
     return _clamp(t, center - half, center + half) == t
 
 
@@ -349,11 +349,11 @@ def _polarity_weights(time: float):
 
     Polarity sequence (positive = A>0 / qA>0):
       ...before 1980 reversal : positive
-      1980 reversal           : pos→neg
-      1991 reversal           : neg→pos
-      2001 reversal           : pos→neg
-      2013 reversal           : neg→pos
-      2025 reversal           : pos→neg
+      1980 reversal           : pos->neg
+      1991 reversal           : neg->pos
+      2001 reversal           : pos->neg
+      2013 reversal           : neg->pos
+      2025 reversal           : pos->neg
       after 2025              : negative (until 2031+)
     """
     d = 2.0 * _3MONTHS_S
@@ -362,44 +362,44 @@ def _polarity_weights(time: float):
         # pure positive
         return 1.0, 0.0
 
-    elif _in_window(time, _REVERSAL_1980):
+    elif _in_reversal(time, _REVERSAL_1980):
         P = _p_transition(time, _REVERSAL_1980, _3MONTHS_S)
-        return P, 1.0 - P  # pos→neg
+        return P, 1.0 - P  # pos->neg
 
     elif _clamp(time, _REVERSAL_1980 + d, _REVERSAL_1991 - d) == time:
         # pure negative
         return 0.0, 1.0
 
-    elif _in_window(time, _REVERSAL_1991):
+    elif _in_reversal(time, _REVERSAL_1991):
         P = _p_transition(time, _REVERSAL_1991, _3MONTHS_S)
-        return 1.0 - P, P  # neg→pos (P high early → neg weight high)
+        return 1.0 - P, P  # neg->pos (P high early -> neg weight high)
 
     elif _clamp(time, _REVERSAL_1991 + d, _REVERSAL_2001 - d) == time:
         # pure positive
         return 1.0, 0.0
 
-    elif _in_window(time, _REVERSAL_2001):
+    elif _in_reversal(time, _REVERSAL_2001):
         P = _p_transition(time, _REVERSAL_2001, _3MONTHS_S)
-        return P, 1.0 - P  # pos→neg
+        return P, 1.0 - P  # pos->neg
 
     elif _clamp(time, _REVERSAL_2001 + d, _REVERSAL_2013 - d) == time:
         # pure negative
         return 0.0, 1.0
 
-    elif _in_window(time, _REVERSAL_2013):
+    elif _in_reversal(time, _REVERSAL_2013):
         P = _p_transition(time, _REVERSAL_2013, _3MONTHS_S)
-        return 1.0 - P, P  # neg→pos
+        return 1.0 - P, P  # neg->pos
 
     elif _clamp(time, _REVERSAL_2013 + d, _REVERSAL_2025) == time:
         # pure positive
         return 1.0, 0.0
 
     else:
-        # after 2025 rev → pure negative (valid ~to 2031)
+        # after 2025 rev -> pure negative (valid ~to 2031)
         return 0.0, 1.0
 
 
-# Flux table loader & interpolator
+# Flux table loader and csv tables interpolator
 # --------------------------------------------------------------------------
 class _FluxTable:
     """
@@ -416,31 +416,17 @@ class _FluxTable:
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"Flux table not found: {csv_path}")
 
-        df = pd.read_csv(csv_path, comment="#")
+        df = pd.read_csv(csv_path)
         df.columns = [c.strip() for c in df.columns]
 
-        # Accept flexible column naming
-        col_map = {}
-        for col in df.columns:
-            lc = col.lower().replace(" ", "").replace("[", "").replace("]", "")
-            if lc in ("z",):
-                col_map["Z"] = col
-            elif lc in ("a",):
-                col_map["A"] = col
-            elif lc.startswith("ssn"):
-                col_map["SSN"] = col
-            elif lc.startswith("ekn") or lc.startswith("ek"):
-                col_map["Ekn"] = col
-            elif lc.startswith("j"):
-                col_map["J"] = col
-
-        df = df.rename(columns={v: k for k, v in col_map.items()})
+        # select the specie
         df = df[df["Z"] == Z].copy()
+
         if df.empty:
             raise ValueError(f"No data for Z={Z} in {csv_path}")
 
-        ssn_vals = np.sort(df["SSN"].unique())
-        ekn_vals = np.sort(df["Ekn"].unique())
+        ssn_vals = np.sort(df["SSN(t-tau)"].unique())
+        ekn_vals = np.sort(df["Ekn[MeV/n]"].unique())
 
         # Build flux grid: rows=SSN, cols=Ekn (log10 interpolation in energy)
         grid = np.zeros((len(ssn_vals), len(ekn_vals)))
@@ -448,18 +434,19 @@ class _FluxTable:
         ekn_idx = {e: i for i, e in enumerate(ekn_vals)}
 
         for _, row in df.iterrows():
-            i = ssn_idx[row["SSN"]]
-            j = ekn_idx[row["Ekn"]]
-            grid[i, j] = row["J"]
+            i = ssn_idx[row["SSN(t-tau)"]]
+            j = ekn_idx[row["Ekn[MeV/n]"]]
+            grid[i, j] = row["J(t)[MeV/n^-1 sr^-1 s^-1 m^-2]"]
 
         log_ekn = np.log10(ekn_vals)
 
+        # linear interpolation
         self._interp = RegularGridInterpolator(
             (ssn_vals, log_ekn),
             grid,
             method="linear",
             bounds_error=False,
-            fill_value=None,  # extrapolate at boundaries
+            fill_value=None,
         )
         self._ssn_min = ssn_vals.min()
         self._ssn_max = ssn_vals.max()
@@ -473,11 +460,7 @@ class _FluxTable:
         return float(self._interp([[ssn_c, math.log10(ekn_c)]])[0])
 
 
-# ---------------------------------------------------------------------------
 # SSN loader
-# ---------------------------------------------------------------------------
-
-
 class _SSNTable:
     """Loads and interpolates the Smoothed Sunspot Number time series downloaded from NOAA."""
 
@@ -485,7 +468,7 @@ class _SSNTable:
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"SSN table not found: {csv_path}")
 
-        df = pd.read_csv(csv_path, comment="#")
+        df = pd.read_csv(csv_path)
         df.columns = [c.strip() for c in df.columns]
         t_col = df.columns[0]
         s_col = df.columns[1]
@@ -502,7 +485,7 @@ class _SSNTable:
 
 # Public model class
 # ---------------------------------------------------------------------------
-class model:
+class solar_mod:
     """
     PGLIS galactic cosmic-ray flux model.
 
@@ -514,8 +497,8 @@ class model:
 
     Examples
     --------
-    >>> from pglis import model
-    >>> model = model()
+    >>> from pglis import solar_mod
+    >>> model = solar_mod()
     >>> # Single flux value
     >>> J = model.flux(Z=1, Ekn=1000.0, time=1_000_000_000)
     """
@@ -547,7 +530,6 @@ class model:
         delay = _time_delay(time)
         return self._ssn.eval(time - delay)
 
-    # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
