@@ -92,8 +92,7 @@ def _get_latest_version(verbose: bool = False) -> str | None:
 
         # data["id"] is the integer record ID of the latest version
         latest = str(data["id"])
-        if verbose:
-            print(f"[pglis] Latest Zenodo version: {latest}")
+
         return latest
 
     except Exception as e:
@@ -228,7 +227,9 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
 
     if latest == stored:
         if verbose:
-            print(f"[pglis] Dataset is up to date (version {latest}).")
+            print(
+                f"[pglis] Dataset is up to date (version https://zenodo.org/records/{latest})."
+            )
         return
 
     # new version available or first run
@@ -291,16 +292,18 @@ def update_ssn(verbose: bool = False) -> bool:
         return False
 
 
-# run at import
+##########################
+# run at import time
+##########################
 update_ssn(verbose=True)
-_check_and_update_dataset(verbose=False)
+_check_and_update_dataset(verbose=True)
 
 
 def _data_path(*parts: str) -> str:
     return os.path.join(_HERE, *parts)
 
 
-# Physical constants
+# constants
 _YEAR_TO_S = 365.25 * 24.0 * 3600.0
 _MONTH_TO_S = _YEAR_TO_S / 12.0
 _3MONTHS_S = 7_889_400.0  # 3 months in seconds
