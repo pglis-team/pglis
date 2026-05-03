@@ -1,24 +1,26 @@
 """
-pglis.data
-==========
-Data-retrieval functions built on top of :class:`~pglis.model.model`.
+Author: David Pelosi
+Date: 2025-05-01
 
-All functions return plain NumPy arrays or a ``pandas.DataFrame`` — no
-plotting, no styling.  The caller is responsible for all visualisation.
 
-Typical usage
--------------
->>> from pglis import model
->>> from pglis.data import get_flux_vs_time, get_flux_vs_energy
->>>
->>> model = model()
->>>
->>> df_t = get_flux_vs_time(model, Z=1, Ekn=1000.0,
-...                          t_start=t0, t_end=t1)
->>> plt.semilogy(df_t["time_unix"], df_t["J"])
->>>
->>> df_e = get_flux_vs_energy(model, Z=1, time=t0)
->>> plt.loglog(df_e["Ekn_MeV_n"], df_e["J"])
+All functions return plain NumPy arrays or a ``pandas.DataFrame``
+
+Example usage
+>>> import pglis
+>>> model = pglis.model()
+...
+>>> df = pglis.get_flux_vs_time(
+    model,
+    Z=1,  # H
+    Ekn=1000.0,  # MeV/n
+    t_start=dt.datetime(1996, 1, 1).timestamp(),
+    t_end=dt.datetime(2031, 1, 1).timestamp(),
+    n_points=500,
+)
+...
+>>> t = dt.datetime(2001, 6, 1).timestamp()
+>>> df = pglis.get_flux_vs_energy(model, Z=1, time=t)
+
 """
 
 from __future__ import annotations
@@ -31,9 +33,7 @@ import pandas as pd
 
 from .model import model
 
-# ---------------------------------------------------------------------------
 # Internal helpers
-# ---------------------------------------------------------------------------
 
 
 def _linspace_times(t_start: float, t_end: float, n: int) -> np.ndarray:

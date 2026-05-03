@@ -75,9 +75,8 @@ def _get_latest_version(verbose: bool = False) -> str | None:
     Query the Zenodo API for the latest version record ID of the concept DOI.
 
     Zenodo exposes the latest version via:
-      GET https://zenodo.org/api/records/{concept_id}
-    which redirects to the latest record. The record ID in the response
-    (data["id"]) is the version number (e.g. 19971913).
+      GET https://zenodo.org/api/records/{_ZENODO_CONST_ID}
+    which redirects to the latest record. The record ID in the response (data["id"]) is the version number.
 
     Falls back to None if offline or API unavailable.
     """
@@ -290,13 +289,6 @@ def update_ssn(verbose: bool = False) -> bool:
         if verbose:
             print(f"[pglis] SSN update skipped (offline or error): {e}")
         return False
-
-
-##########################
-# run at import time
-##########################
-update_ssn(verbose=True)
-_check_and_update_dataset(verbose=True)
 
 
 def _data_path(*parts: str) -> str:
@@ -641,3 +633,10 @@ class model:
         """
         Ekn_arr = np.asarray(Ekn_arr, dtype=float)
         return np.array([self.flux(Z, e, time) for e in Ekn_arr])
+
+
+##########################
+# run at import time
+##########################
+update_ssn(verbose=True)
+_check_and_update_dataset(verbose=True)
