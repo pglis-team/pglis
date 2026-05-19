@@ -3,7 +3,7 @@ pglis.data
 ==========
 Data-retrieval functions built on top of :class:`~pglis.model.model`.
 
-All functions return plain NumPy arrays or a ``pandas.DataFrame`` — no
+All functions return plain NumPy arrays or a ``pandas.DataFrame`` - no
 plotting, no styling.  The caller is responsible for all visualisation.
 
 Typical usage
@@ -29,7 +29,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .model import model
+from .model import Model
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -54,7 +54,7 @@ def _unix_to_datetime(t: float) -> datetime.datetime:
 
 
 def get_flux_vs_time(
-    model: model,
+    model: Model,
     Z: int,
     Ekn: float,
     t_start: float,
@@ -68,7 +68,7 @@ def get_flux_vs_time(
     ----------
     model : model
     Z : int
-        Atomic number (1–28).
+        Atomic number (1-28).
     Ekn : float
         Kinetic energy per nucleon [MeV/n].
     t_start, t_end : float
@@ -79,9 +79,9 @@ def get_flux_vs_time(
     Returns
     -------
     pandas.DataFrame with columns:
-        ``time_unix``     – Unix timestamp [s]
-        ``datetime_utc``  – UTC datetime string (ISO-8601)
-        ``J``             – Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+        ``time_unix``     - Unix timestamp [s]
+        ``datetime_utc``  - UTC datetime string (ISO-8601)
+        ``J``             - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
     """
     times = _linspace_times(t_start, t_end, n_points)
     J = model.flux_vs_time(Z, Ekn, times)
@@ -96,7 +96,7 @@ def get_flux_vs_time(
 
 
 def get_flux_vs_energy(
-    model: model,
+    model: Model,
     Z: int,
     time: float,
     Ekn_min: float = 10.0,
@@ -110,7 +110,7 @@ def get_flux_vs_energy(
     ----------
     model : model
     Z : int
-        Atomic number (1–28).
+        Atomic number (1-28).
     time : float
         Unix timestamp [s].
     Ekn_min, Ekn_max : float
@@ -121,8 +121,8 @@ def get_flux_vs_energy(
     Returns
     -------
     pandas.DataFrame with columns:
-        ``Ekn_MeV_n``  – Kinetic energy per nucleon [MeV/n]
-        ``J``          – Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+        ``Ekn_MeV_n``  - Kinetic energy per nucleon [MeV/n]
+        ``J``          - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
     """
     Ekn_arr = _logspace_energies(Ekn_min, Ekn_max, n_points)
     J = model.flux_vs_energy(Z, Ekn_arr, time)

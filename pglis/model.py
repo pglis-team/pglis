@@ -1,14 +1,14 @@
 """
-Author: David Pelosi
+Author: David Pelosi, Miguel Orcinha
 Date: 2025-05-01
 
 Python implementation of the PgLis cosmic-ray flux model.
 
 The model computes the differential flux J [MeV/n^-1 sr^-1 s^-1 m^-2] for a
-given nuclear species (atomic number Z) as a function of kinetic energy per
+given nuclear element (atomic number Z) as a function of kinetic energy per
 nucleon (Ekn, MeV/n) and time (Unix timestamp, seconds).
 
-Polarity periods are defined by five solar-magnetic reversal epochs.  Within a
+Polarity periods are defined by five solar-magnetic reversal epochs. Within a
 6-month window around each reversal the flux is blended smoothly between the
 two adjacent polarity states via a logistic transition function.
 
@@ -21,7 +21,7 @@ CSV column format (flux tables):
   Z, A, SSN, Ekn[MeV/n], J[MeV/n^-1 sr^-1 s^-1 m^-2]
 
 CSV column format (SSN):
-  time[Unix s], SSN
+  time[Unix timestamp, s], SSN
 """
 
 import calendar
@@ -38,11 +38,14 @@ import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import interp1d
 
+# paths to package directory and to data directory
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _SSN_CSV = Path(_HERE) / "data_products" / "SSN.csv"
+_SSN_UPDATE = Path(_HERE) / "data_products" / "SSN_update.txt"
 
-# gettig the solar proxy SSN from NOAA SPACE WEATHER PREDICTION CENTER (https://www.swpc.noaa.gov/products/solar-cycle-progression) at import time
 
+# links to solar proxy sunspot number (SSN) - from NOAA SPACE WEATHER
+# PREDICTION CENTER (https://www.swpc.noaa.gov/products/solar-cycle-progression) at import time
 _OBSERVED_URL = (
     "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json"
 )
@@ -64,31 +67,59 @@ def update_ssn(verbose: bool = False) -> bool:
     Returns True if the update succeeded, False if it failed (e.g. offline).
     The existing SSN.csv is left untouched on failure.
     """
+
+    # check if file exists and its last update to understand if it needs updating
+    if os.path.exists(_SSN_UPDATE):
+        with open(_SSN_UPDATE, 'r') as file_ssn:
+            # date from file
+            ssn_date = file_ssn.readlines()[0].split("-")
+
+            # date of system
+            current_date = datetime.now()
+            if ((current_date.month <= int(ssn_date[0]))
+                    and (current_date.month <= int(ssn_date[1]))):
+                return True
+
+    # updating SSN values
     try:
 
         def _fetch(url):
             with urllib.request.urlopen(url, timeout=10) as r:
                 return json.loads(r.read().decode())
 
-        obs = {e["time-tag"]: e.get("smoothed_ssn") for e in _fetch(_OBSERVED_URL)}
-        pred = {e["time-tag"]: e.get("predicted_ssn") for e in _fetch(_PREDICTED_URL)}
+        # defining the content of the ssn files in dictionaries
+        # obs[<time-tag>] = <smoothed_ssn>
+        obs = {e["time-tag"]: e.get("smoothed_ssn")
+               for e in _fetch(_OBSERVED_URL)}
+        pred = {e["time-tag"]: e.get("predicted_ssn")
+                for e in _fetch(_PREDICTED_URL)}
 
-        # merge: observed overrides predicted
+        with open(_SSN_UPDATE, 'w') as file_ssn:
+            # writing last observed entry for later comparison with current date
+            file_ssn.write("{}\n".format(next(reversed(obs.keys()))))
+
+        # merging using keyword argument unpacking
+        # observed overrides predicted
         combined = {
             **{k: v for k, v in pred.items() if v is not None},
             **{k: v for k, v in obs.items() if v is not None},
         }
 
+        # minimum time allowed
         cutoff = datetime(1970, 1, 1, tzinfo=timezone.utc).timestamp()
+
+        # sorting lines by time of "combined" dictionary
+        # and removing times before 1970
         rows = sorted(
             (
                 (_mid_month_unix(tag), float(ssn))
                 for tag, ssn in combined.items()
                 if _mid_month_unix(tag) >= cutoff and float(ssn) > 0
             ),
-            key=lambda x: x[0],
+            key=lambda x: x[0]
         )
 
+        # create directory to store result if it doesn't exist already
         _SSN_CSV.parent.mkdir(parents=True, exist_ok=True)
         with open(_SSN_CSV, "w") as f:
             f.write("TimeStamp,Sunspots\n")
@@ -109,10 +140,6 @@ def update_ssn(verbose: bool = False) -> bool:
 update_ssn(verbose=False)
 
 
-def _data_path(*parts: str) -> str:
-    return os.path.join(_HERE, *parts)
-
-
 # Physical constants
 _YEAR_TO_S = 365.25 * 24.0 * 3600.0
 _MONTH_TO_S = _YEAR_TO_S / 12.0
@@ -130,32 +157,32 @@ _TM = 9.82 * _MONTH_TO_S
 _TA = 4.87 * _MONTH_TO_S
 _T0 = 21.44 * _YEAR_TO_S
 _TP = 2.25 * _YEAR_TO_S
-# 2001, 3, 14, 0, 0, 0
-_DELAY_TREF = _DELAY_TREF = 984_528_000.0
+_DELAY_TREF = _DELAY_TREF = 984_528_000.0  # 2001, 3, 14, 0, 0, 0
 
 
 # Helper functions
 # ---------------------------------------------------------------------------
 
+def _join_path(*parts: str) -> str:
+    """This function joins given directories into single path."""
+    return os.path.join(_HERE, *parts)
 
-# polarity transition function
-def _p_transition(
+
+def _polarity_transition(
     time: float, time_reversal: float, time_delta: float = _3MONTHS_S
 ) -> float:
+    """Polarity smooth transition function."""
     return 1.0 / (1.0 + math.exp((time - time_reversal) / time_delta))
 
 
 def _time_delay(t: float) -> float:
+    """Time delay from Tomassetti(2022)."""
     time = (t - _DELAY_TREF) - _TP
     return _TM + _TA * math.cos(2.0 * math.pi * time / _T0)
 
 
-def _clamp(value: float, lo: float, hi: float) -> float:
-    return max(lo, min(value, hi))
-
-
 def _in_window(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> bool:
-    return _clamp(t, center - half, center + half) == t
+    return np.clip(t, center - half, center + half) == t
 
 
 # Polarity sequence helper
@@ -181,34 +208,34 @@ def _polarity_weights(time: float):
         return 1.0, 0.0
 
     elif _in_window(time, _REVERSAL_1980):
-        P = _p_transition(time, _REVERSAL_1980, _3MONTHS_S)
+        P = _polarity_transition(time, _REVERSAL_1980, _3MONTHS_S)
         return P, 1.0 - P  # pos→neg
 
-    elif _clamp(time, _REVERSAL_1980 + d, _REVERSAL_1991 - d) == time:
+    elif np.clip(time, _REVERSAL_1980 + d, _REVERSAL_1991 - d) == time:
         # pure negative
         return 0.0, 1.0
 
     elif _in_window(time, _REVERSAL_1991):
-        P = _p_transition(time, _REVERSAL_1991, _3MONTHS_S)
+        P = _polarity_transition(time, _REVERSAL_1991, _3MONTHS_S)
         return 1.0 - P, P  # neg→pos (P high early → neg weight high)
 
-    elif _clamp(time, _REVERSAL_1991 + d, _REVERSAL_2001 - d) == time:
+    elif np.clip(time, _REVERSAL_1991 + d, _REVERSAL_2001 - d) == time:
         # pure positive
         return 1.0, 0.0
 
     elif _in_window(time, _REVERSAL_2001):
-        P = _p_transition(time, _REVERSAL_2001, _3MONTHS_S)
+        P = _polarity_transition(time, _REVERSAL_2001, _3MONTHS_S)
         return P, 1.0 - P  # pos→neg
 
-    elif _clamp(time, _REVERSAL_2001 + d, _REVERSAL_2013 - d) == time:
+    elif np.clip(time, _REVERSAL_2001 + d, _REVERSAL_2013 - d) == time:
         # pure negative
         return 0.0, 1.0
 
     elif _in_window(time, _REVERSAL_2013):
-        P = _p_transition(time, _REVERSAL_2013, _3MONTHS_S)
+        P = _polarity_transition(time, _REVERSAL_2013, _3MONTHS_S)
         return 1.0 - P, P  # neg→pos
 
-    elif _clamp(time, _REVERSAL_2013 + d, _REVERSAL_2025) == time:
+    elif np.clip(time, _REVERSAL_2013 + d, _REVERSAL_2025) == time:
         # pure positive
         return 1.0, 0.0
 
@@ -277,7 +304,7 @@ class _FluxTable:
             grid,
             method="linear",
             bounds_error=False,
-            fill_value=None,  # extrapolate at boundaries
+            fill_value=np.nan,  # extrapolate at boundaries
         )
         self._ssn_min = ssn_vals.min()
         self._ssn_max = ssn_vals.max()
@@ -318,9 +345,9 @@ class _SSNTable:
         return float(self._interp(t))
 
 
-# Public model class
+# Public Model class
 # ---------------------------------------------------------------------------
-class model:
+class Model:
     """
     PGLIS galactic cosmic-ray flux model.
 
@@ -341,7 +368,7 @@ class model:
     def __init__(self, data_dir: str | None = None):
         self._data_dir = data_dir or _HERE
 
-        ssn_path = _data_path(self._data_dir, "data_products", "SSN.csv")
+        ssn_path = _join_path(self._data_dir, "data_products", "SSN.csv")
         self._ssn = _SSNTable(ssn_path)
 
         # Cache for loaded flux tables: (Z, polarity) -> _FluxTable

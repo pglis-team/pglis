@@ -5,7 +5,7 @@ setup(
     version="1.0",
     description="PGLIS galactic cosmic-ray flux model",
     packages=find_packages(),
-    python_requires=">=3.10",
+    python_requires=">=3.7",
     install_requires=[
         "numpy>=1.24",
         "pandas>=2.0",
