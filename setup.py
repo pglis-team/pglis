@@ -17,6 +17,7 @@ setup(
             "data_products/Aneg/*.csv",
             "data_products/Apos/*.csv",
             "data_products/SSN.csv",
+            "data_products/.SSN_update",
             "data_products/.zenodo_version",  # version tracking file
         ]
     },
