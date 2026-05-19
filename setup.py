@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pglis",
-    version="1.0",
+    version="1.1",
     description="PGLIS galactic cosmic-ray flux model",
     packages=find_packages(),
     python_requires=">=3.7",
@@ -17,6 +17,7 @@ setup(
             "data_products/Aneg/*.csv",
             "data_products/Apos/*.csv",
             "data_products/SSN.csv",
+            "data_products/.zenodo_version",  # version tracking file
         ]
     },
 )
