@@ -42,36 +42,58 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
-from scipy.interpolate import interp1d
+from scipy.interpolate import make_interp_spline
 
 # paths to package directory and to data directory
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _SSN_CSV = Path(_HERE) / "data_products" / "SSN.csv"
-_SSN_UPDATE = Path(_HERE) / "data_products" / "SSN_update.txt"
+_SSN_UPDATE = Path(_HERE) / "data_products" / ".SSN_update"
 
 
 # links to solar proxy sunspot number (SSN) - from NOAA SPACE WEATHER
 # PREDICTION CENTER (https://www.swpc.noaa.gov/products/solar-cycle-progression) at import time
-_OBSERVED_URL = (
+_SSN_OBSERVED_URL = (
     "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json"
 )
 _SSN_PREDICTED_URL = (
     "https://services.swpc.noaa.gov/json/solar-cycle/predicted-solar-cycle.json"
 )
 
-
-def _set_timestamp(time_tag: str) -> float:
-    """Convert 'YYYY-MM' to Unix timestamp of the middle day of that month."""
-    dt = datetime.strptime(time_tag, "%Y-%m")
-    mid = (calendar.monthrange(dt.year, dt.month)[1] + 1) // 2
-    return dt.replace(day=mid, tzinfo=timezone.utc).timestamp()
-
-
 # Zenodo dataset downloader
 _ZENODO_CONST_ID = "19607311"  # DOI — always points to latest version of the dataset
 _ZENODO_VERSION = "19607312"  # currently embedded dataset version
 _ZENODO_BASE = f"https://zenodo.org/api/records/{_ZENODO_VERSION}/files"
 _VERSION_FILE = Path(_HERE) / "data_products" / ".zenodo_version"
+
+# constants
+_YEAR_TO_S = 365.25 * 24.0 * 3600.0
+_MONTH_TO_S = _YEAR_TO_S / 12.0
+_3MONTHS_S = 7_889_400.0  # 3 months in seconds
+
+# solar-polarity reversal epochs (Unix timestamps)
+_REVERSAL_1980 = 344_473_200.0
+_REVERSAL_1991 = 668_991_600.0
+_REVERSAL_2001 = 0.5 * 961_023_600.0 + 0.5 * 997_830_000.0
+_REVERSAL_2013 = 0.5 * 1_352_937_600.0 + 0.5 * 1_394_841_600.0
+_REVERSAL_2025 = 1_730_415_600.0
+
+# Time-delay model parameters Tomassetti et al. (2022) https://doi.org/10.1103/PhysRevD.106.103022
+_TM = 9.82 * _MONTH_TO_S
+_TA = 4.87 * _MONTH_TO_S
+_T0 = 21.44 * _YEAR_TO_S
+_TP = 2.25 * _YEAR_TO_S
+_DELAY_TREF = _DELAY_TREF = 984_528_000.0  # 2001, 3, 14, 0, 0, 0
+
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+def _get_timestamp_from_time_tag(time_tag: str) -> float:
+    """Convert 'YYYY-MM' to Unix timestamp of the middle day of that month."""
+    dt = datetime.strptime(time_tag, "%Y-%m")
+    mid = (calendar.monthrange(dt.year, dt.month)[1] + 1) // 2
+    return dt.replace(day=mid, tzinfo=timezone.utc).timestamp()
 
 
 def _get_latest_version(verbose: bool = False) -> str | None:
@@ -134,7 +156,7 @@ def update_dataset(
     Parameters
     ----------
     Z : int or list of int or None
-        Atomic number(s) to download (1–28). None downloads all Z.
+        Atomic number(s) to download (1-28). None downloads all Z.
     polarity : 'Apos', 'Aneg', list, or None
         Polarity/ies to download. None downloads both.
     verbose : bool
@@ -152,11 +174,13 @@ def update_dataset(
     >>> update_dataset(Z=[1, 2, 6], verbose=True)
     >>> update_dataset(verbose=True)   # full dataset — 56 files
     """
+
     # normalise Z
     Z_list = (
         list(range(1, 29)) if Z is None else (
             [Z] if isinstance(Z, int) else list(Z))
     )
+
     # normalise polarity
     pol_list = (
         ["Apos", "Aneg"]
@@ -209,7 +233,10 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
       3. If different (or files missing) -> download the full dataset.
       4. If same -> skip entirely.
     """
+
+    # getting latest version of data from zenodo
     latest = _get_latest_version(verbose=verbose)
+
     if latest is None:
         # offline — check if files exist at all
         stored = _load_stored_version()
@@ -221,6 +248,7 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
             for pol in ("Apos", "Aneg")
             for z in range(1, 29)
         )
+
         if missing:
             if verbose:
                 print("[pglis] Offline and files missing — cannot download dataset.")
@@ -252,7 +280,7 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
     update_dataset(verbose=verbose)
 
 
-def update_ssn(verbose: bool = False) -> bool:
+def _update_ssn(verbose: bool = False) -> bool:
     """
     Download the latest SSN data from NOAA and recreate SSN.csv.
     Returns True if the update succeeded, False if it failed.
@@ -305,9 +333,9 @@ def update_ssn(verbose: bool = False) -> bool:
         # and removing times before 1970
         rows = sorted(
             (
-                (_set_timestamp(tag), float(ssn))
+                (_get_timestamp_from_time_tag(tag), float(ssn))
                 for tag, ssn in combined.items()
-                if _set_timestamp(tag) >= cutoff and float(ssn) > 0
+                if _get_timestamp_from_time_tag(tag) >= cutoff and float(ssn) > 0
             ),
             key=lambda x: x[0]
         )
@@ -329,29 +357,6 @@ def update_ssn(verbose: bool = False) -> bool:
         return False
 
 
-# constants
-_YEAR_TO_S = 365.25 * 24.0 * 3600.0
-_MONTH_TO_S = _YEAR_TO_S / 12.0
-_3MONTHS_S = 7_889_400.0  # 3 months in seconds
-
-# solar-polarity reversal epochs (Unix timestamps)
-_REVERSAL_1980 = 344_473_200.0
-_REVERSAL_1991 = 668_991_600.0
-_REVERSAL_2001 = 0.5 * 961_023_600.0 + 0.5 * 997_830_000.0
-_REVERSAL_2013 = 0.5 * 1_352_937_600.0 + 0.5 * 1_394_841_600.0
-_REVERSAL_2025 = 1_730_415_600.0
-
-# Time-delay model parameters Tomassetti et al. (2022) https://doi.org/10.1103/PhysRevD.106.103022
-_TM = 9.82 * _MONTH_TO_S
-_TA = 4.87 * _MONTH_TO_S
-_T0 = 21.44 * _YEAR_TO_S
-_TP = 2.25 * _YEAR_TO_S
-_DELAY_TREF = _DELAY_TREF = 984_528_000.0  # 2001, 3, 14, 0, 0, 0
-
-
-# Helper functions
-# ---------------------------------------------------------------------------
-
 def _join_path(*parts: str) -> str:
     """This function joins given directories into single path."""
     return os.path.join(_HERE, *parts)
@@ -361,21 +366,34 @@ def _polarity_transition(
     time: float, time_reversal: float, time_delta: float = _3MONTHS_S
 ) -> float:
     """Polarity smooth transition function."""
-    return 1.0 / (1.0 + math.exp((time - time_reversal) / time_delta))
+    return 1.0 / (1.0 + np.exp((time - time_reversal) / time_delta))
 
 
-def _time_delay(t: float) -> float:
+def _time_delay(t: float | np.ndarray) -> float | np.ndarray:
     """Time delay from Tomassetti(2022)."""
     time = (t - _DELAY_TREF) - _TP
-    return _TM + _TA * math.cos(2.0 * math.pi * time / _T0)
+    return _TM + _TA * np.cos(2.0 * np.pi * time / _T0)
 
 
 def _in_reversal(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> bool:
     return np.clip(t, center - half, center + half) == t
 
 
+def _linspace_times(t_start: float, t_end: float, n: int) -> np.ndarray:
+    return np.linspace(t_start, t_end, n)
+
+
+def _logspace_energies(Ekn_min: float, Ekn_max: float, n: int) -> np.ndarray:
+    return np.logspace(math.log10(Ekn_min), math.log10(Ekn_max), n)
+
+
+def _unix_to_datetime(t: float) -> datetime:
+    return datetime.fromtimestamp(t)
+
 # Polarity sequence helper
 # ---------------------------------------------------------------------------
+
+
 def _polarity_weights(time: float):
     """
     Return (w_pos, w_neg) weights for the flux blend at the given Unix time.
@@ -433,6 +451,7 @@ def _polarity_weights(time: float):
         return 0.0, 1.0
 
 
+# --------------------------------------------------------------------------
 # Flux table loader and csv tables interpolator
 # --------------------------------------------------------------------------
 class _FluxTable:
@@ -489,12 +508,14 @@ class _FluxTable:
 
     def flux(self, ssn: float, ekn: float) -> float:
         """Return interpolated flux J for given SSN and Ekn [MeV/n]."""
-        ssn_c = float(np.clip(ssn, self._ssn_min, self._ssn_max))
-        ekn_c = float(np.clip(ekn, self._ekn_min, self._ekn_max))
-        return float(self._interp([[ssn_c, math.log10(ekn_c)]])[0])
+        ssn_c = np.clip(ssn, self._ssn_min, self._ssn_max)
+        ekn_c = np.clip(ekn, self._ekn_min, self._ekn_max)
+        return self._interp([[ssn_c, np.log10(ekn_c)]])[0]
 
 
+# --------------------------------------------------------------------------
 # SSN loader
+# --------------------------------------------------------------------------
 class _SSNTable:
     """Loads and interpolates the Smoothed Sunspot Number time series downloaded from NOAA."""
 
@@ -509,14 +530,15 @@ class _SSNTable:
         times = df[t_col].values.astype(float)
         ssn = df[s_col].values.astype(float)
 
-        self._interp = interp1d(
-            times, ssn, kind="linear", bounds_error=False, fill_value=(ssn[0], ssn[-1])
+        self._interp = make_interp_spline(
+            times, ssn, k=1
         )
 
-    def eval(self, t: float) -> float:
-        return float(self._interp(t))
+    def eval(self, t: float | np.ndarray) -> float:
+        return self._interp(t)
 
 
+# ---------------------------------------------------------------------------
 # Public Model class
 # ---------------------------------------------------------------------------
 class solar_mod:
@@ -546,9 +568,9 @@ class solar_mod:
         # Cache for loaded flux tables: (Z, polarity) -> _FluxTable
         self._tables: dict[tuple[int, str], _FluxTable] = {}
 
-    # ------------------------------------------------------------------
+    # ----------------------------------
     # Private helpers
-    # ------------------------------------------------------------------
+    # ----------------------------------
 
     def _get_table(self, Z: int, polarity: str) -> _FluxTable:
         key = (Z, polarity)
@@ -564,10 +586,11 @@ class solar_mod:
         delay = _time_delay(time)
         return self._ssn.eval(time - delay)
 
+    # ----------------------------------
     # Public API
-    # ------------------------------------------------------------------
+    # ----------------------------------
 
-    def flux(self, Z: int, Ekn: float, time: float) -> float:
+    def get_flux(self, Z: int, Ekn: float, time: float) -> float:
         """
         Compute differential flux J at a single (Z, Ekn, time) point.
 
@@ -598,7 +621,7 @@ class solar_mod:
 
         return J
 
-    def flux_vs_time(
+    def get_array_flux_vs_time(
         self,
         Z: int,
         Ekn: float,
@@ -621,10 +644,10 @@ class solar_mod:
         np.ndarray
             Flux values [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}], same length as ``times``.
         """
-        times = np.asarray(times, dtype=float)
-        return np.array([self.flux(Z, Ekn, t) for t in times])
+        times = np.asarray(times, dtype=np.float64)
+        return np.array([self.get_flux(Z, Ekn, t) for t in times])
 
-    def flux_vs_energy(
+    def get_flux_vs_energy(
         self,
         Z: int,
         Ekn_arr: np.ndarray,
@@ -647,12 +670,103 @@ class solar_mod:
         np.ndarray
             Flux values [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}], same length as ``Ekn_arr``.
         """
-        Ekn_arr = np.asarray(Ekn_arr, dtype=float)
-        return np.array([self.flux(Z, e, time) for e in Ekn_arr])
+        Ekn_arr = np.asarray(Ekn_arr, dtype=np.float64)
+        return np.array([self.get_flux(Z, e, time) for e in Ekn_arr])
+
+    def get_dataframe_flux_vs_time(self,
+                                   Z: int,
+                                   Ekn: float,
+                                   t_start: float, t_end: float,
+                                   t_delta=2592000.  # 1 month per datapoint
+                                   ) -> pd.DataFrame:
+        """
+        Compute J(t) for a fixed species and kinetic energy over a time range.
+
+        Parameters
+        ----------
+        model : solar_mod
+        Z : int
+            Atomic number (1-28).
+        Ekn : float
+            Kinetic energy per nucleon [MeV/n].
+        t_start, t_end : float
+            Time range as Unix timestamps [s].
+
+        Returns
+        -------
+        pandas.DataFrame with columns:
+            time_unix     - Unix timestamp [s]
+            datetime_utc  - UTC datetime string (ISO-8601)
+            J             - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+        """
+        # npoints number of months between t_start and t_end
+        n_points = int((t_end - t_start) / t_delta) + 1
+
+        times = _linspace_times(t_start, t_end, n_points)
+        J = self.get_array_flux_vs_time(Z, Ekn, times)
+
+        return pd.DataFrame(
+            {
+                "time_unix": times,  # for math
+                "datetime_utc": [_unix_to_datetime(t).isoformat() for t in times],
+                "J[MeV/n^(-1) sr^(-1) s^(-1) m^(-2)]": J,
+            }
+        )
+
+    def get_dataframe_flux_vs_energy(self,
+                                     Z: int,
+                                     time: float,
+                                     Ekn_min: float = 10.0,
+                                     Ekn_max: float = 1e5,
+                                     Ekn_npoints: int = 200,
+                                     sampling: str = "log10",
+                                     endpoint: bool = True
+                                     ) -> pd.DataFrame:
+        """
+        Compute the differential energy spectrum J(Ekn) at a fixed time.
+
+        Parameters
+        ----------
+        model : solar_mod
+        Z : int
+            Atomic number (1-28).
+        time : float
+            Unix timestamp [s].
+        Ekn_min, Ekn_max : float
+            Energy range [MeV/n] (logarithmically sampled).
+        Ekn_npoints : int
+            Number of energy samples.
+        sampling : str (default = log10)
+            "log10" or "log" for logarithmic sampling
+            "linear" for linear sampling
+        endpoint: str (default = True)
+            array of energies considered is [Ekn_min; Ekn_max] if true and [Ekn_min; Ekn_max) otherwise
+
+        Returns
+        -------
+        pandas.DataFrame with columns:
+            Ekn  - Kinetic energy per nucleon [MeV/n]
+            J    - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+        """
+
+        if sampling == "log" or sampling == "log10":
+            Ekn_arr = np.logspace(np.log10(Ekn_min), np.log10(
+                Ekn_max), Ekn_npoints, endpoint)
+        else:
+            Ekn_arr = np.linspace(Ekn_min, Ekn_max, Ekn_npoints, endpoint)
+
+        J = self.get_flux_vs_energy(Z, Ekn_arr, time)
+
+        return pd.DataFrame(
+            {
+                "Ekn[MeV/n]": Ekn_arr,
+                "J[MeV/n^(-1) sr^(-1) s^(-1) m^(-2)]": J,
+            }
+        )
 
 
 ##########################
 # run at import time
 ##########################
-update_ssn(verbose=True)
+_update_ssn(verbose=True)
 _check_and_update_dataset(verbose=True)
