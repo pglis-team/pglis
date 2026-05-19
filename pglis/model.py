@@ -647,7 +647,7 @@ class solar_mod:
         times = np.asarray(times, dtype=np.float64)
         return np.array([self.get_flux(Z, Ekn, t) for t in times])
 
-    def get_flux_vs_energy(
+    def get_array_flux_vs_energy(
         self,
         Z: int,
         Ekn_arr: np.ndarray,
@@ -677,7 +677,8 @@ class solar_mod:
                                    Z: int,
                                    Ekn: float,
                                    t_start: float, t_end: float,
-                                   t_delta=2592000.  # 1 month per datapoint
+                                   t_delta=2592000.,  # 1 month per datapoint
+                                   endpoint: bool = True
                                    ) -> pd.DataFrame:
         """
         Compute J(t) for a fixed species and kinetic energy over a time range.
@@ -691,7 +692,10 @@ class solar_mod:
             Kinetic energy per nucleon [MeV/n].
         t_start, t_end : float
             Time range as Unix timestamps [s].
-
+        t_delta : float
+            Time between fluxes as Unix timestamps [s].
+        endpoint: str (default = True)
+            Include the end point. Array of times considered is [t_start; t_end] if true and [t_start; t_end) otherwise.
         Returns
         -------
         pandas.DataFrame with columns:
@@ -700,9 +704,9 @@ class solar_mod:
             J             - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
         """
         # npoints number of months between t_start and t_end
-        n_points = int((t_end - t_start) / t_delta) + 1
+        n_points = int((t_end - t_start) / t_delta)
 
-        times = _linspace_times(t_start, t_end, n_points)
+        times = np.linspace(t_start, t_end, n_points, endpoint=endpoint)
         J = self.get_array_flux_vs_time(Z, Ekn, times)
 
         return pd.DataFrame(
@@ -740,7 +744,7 @@ class solar_mod:
             "log10" or "log" for logarithmic sampling
             "linear" for linear sampling
         endpoint: str (default = True)
-            array of energies considered is [Ekn_min; Ekn_max] if true and [Ekn_min; Ekn_max) otherwise
+            Include the end point. Array of energies considered is [Ekn_min; Ekn_max] if true and [Ekn_min; Ekn_max) otherwise.
 
         Returns
         -------
@@ -753,9 +757,10 @@ class solar_mod:
             Ekn_arr = np.logspace(np.log10(Ekn_min), np.log10(
                 Ekn_max), Ekn_npoints, endpoint)
         else:
-            Ekn_arr = np.linspace(Ekn_min, Ekn_max, Ekn_npoints, endpoint)
+            Ekn_arr = np.linspace(
+                Ekn_min, Ekn_max, Ekn_npoints, endpoint=endpoint)
 
-        J = self.get_flux_vs_energy(Z, Ekn_arr, time)
+        J = self.get_array_flux_vs_energy(Z, Ekn_arr, time)
 
         return pd.DataFrame(
             {
