@@ -1,34 +1,40 @@
+[build-system]
+requires = ["setuptools", "numpy>=1.24", "pandas>=2.0", "scipy>=1.10"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pglis"
 version = "1.1"
+description = "PGLIS solar-modulated galactic cosmic-ray flux model"
+
 authors = [
-    {name="David Pelosi", email="david.pelosi@pg.infn.it"},
-    {name="Miguel Orcinha", email="orcinha@pg.infn.it"},
-    {name="Bruna Bertucci"},
-    {name="Fernando Barão"},
-    {name="Emanuele Fiandrini"},
-    {name="Nicola Tomassetti"},
+    { name = "David Pelosi", email = "david.pelosi@pg.infn.it" },
+    { name = "Miguel Orcinha", email = "orcinha@pg.infn.it" },
+    { name = "Bruna Bertucci" },
+    { name = "Fernando Barão" },
+    { name = "Emanuele Fiandrini" },
+    { name = "Nicola Tomassetti" },
 ]
 maintainers = [
-    {name="David Pelosi", email="david.pelosi@pg.infn.it"},
-    {name="Miguel Orcinha", email="orcinha@pg.infn.it"}
+    { name = "David Pelosi", email = "david.pelosi@pg.infn.it" },
+    { name = "Miguel Orcinha", email = "orcinha@pg.infn.it" },
 ]
-description = "PGLIS solar-modulated galactic cosmic-ray flux model"
+
 readme = "README.md"
-python_requires=">=3.7"
+requires-python = ">=3.7"
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "'License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
 ]
-license = "GNU GPLv3"
-license-files = ["LICENSE"]
-dependencies = [
-    "numpy>=1.24",
-    "pandas>=2.0",
-    "scipy>=1.10",
-]
 
 [project.urls]
 Homepage = "https://github.com/davidpelosi21/PgLis"
 Issues = "https://github.com/davidpelosi21/PgLis/issues"
+
+[tool.setuptools]
+package-dir = { "" = "." }
+
+[tool.setuptools.packages.find]
+where = ["pglis"]
