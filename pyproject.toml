@@ -33,8 +33,5 @@ classifiers = [
 Homepage = "https://github.com/davidpelosi21/PgLis"
 Issues = "https://github.com/davidpelosi21/PgLis/issues"
 
-[tool.setuptools]
-package-dir = { "" = "." }
-
 [tool.setuptools.packages.find]
-where = ["pglis"]
+where = ["."]

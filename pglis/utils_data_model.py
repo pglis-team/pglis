@@ -10,12 +10,13 @@ import json
 
 # paths to package directory and to data directory
 _HERE = os.path.dirname(os.path.abspath(__file__))
+_DATA_FOLDER = Path(_HERE) / "data_products"
 
 # Zenodo dataset downloader
 _ZENODO_CONST_ID = "19607311"  # DOI — always points to latest version of the dataset
 _ZENODO_VERSION = "19607312"  # currently embedded dataset version
 _ZENODO_BASE = f"https://zenodo.org/api/records/{_ZENODO_VERSION}/files"
-_VERSION_FILE = Path(_HERE) / "data_products" / ".zenodo_version"
+_VERSION_FILE = _DATA_FOLDER / ".zenodo_version"
 
 
 def _get_latest_version(verbose: bool = False) -> str | None:

@@ -30,7 +30,6 @@ CSV column format (SSN):
   time[Unix timestamp, s], SSN
 """
 
-import math
 import os
 from datetime import datetime
 from pathlib import Path
@@ -40,8 +39,8 @@ import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import make_interp_spline
 
-from utils_data_ssn import _update_ssn
-from utils_data_model import _check_and_update_dataset
+from pglis.utils_data_ssn import _update_ssn
+from pglis.utils_data_model import _check_and_update_dataset
 
 # paths to package directory and to data directory
 _HERE = os.path.dirname(os.path.abspath(__file__))
