@@ -9,10 +9,11 @@ import urllib.error
 import calendar
 from datetime import datetime, timezone
 import json
+from platformdirs import user_data_dir
 
 # paths to package directory and to data directory
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_DATA_FOLDER = Path(_HERE) / "data_products"
+_BASE_FOLDER = user_data_dir("pglis", appauthor=False)
+_DATA_FOLDER = Path(_BASE_FOLDER) / "data_products"
 _SSN_CSV = _DATA_FOLDER / "SSN.csv"
 _SSN_UPDATE = _DATA_FOLDER / ".SSN_update"
 
@@ -39,9 +40,6 @@ def _update_ssn(verbose: bool = False) -> bool:
     Returns True if the update succeeded, False if it failed.
     The existing SSN.csv is left untouched on failure.
     """
-
-    if not os.path.exists(_DATA_FOLDER):
-        _DATA_FOLDER.mkdir(parents=True, exist_ok=True)
 
     # check if file exists and its last update to understand if it needs updating
     if os.path.exists(_SSN_UPDATE):

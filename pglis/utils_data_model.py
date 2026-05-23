@@ -7,10 +7,11 @@ from pathlib import Path
 import urllib.request
 import urllib.error
 import json
+from platformdirs import user_data_dir
 
 # paths to package directory and to data directory
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_DATA_FOLDER = Path(_HERE) / "data_products"
+_BASE_FOLDER = user_data_dir("pglis", appauthor=False)
+_DATA_FOLDER = Path(_BASE_FOLDER) / "data_products"
 
 # Zenodo dataset downloader
 _ZENODO_CONST_ID = "19607311"  # DOI — always points to latest version of the dataset
@@ -121,7 +122,7 @@ def update_dataset(
 
     all_ok = True
     for pol in pol_list:
-        out_dir = Path(_HERE) / "data_products" / pol
+        out_dir = Path(_BASE_FOLDER) / "data_products" / pol
         out_dir.mkdir(parents=True, exist_ok=True)
 
         for z in Z_list:
@@ -165,7 +166,7 @@ def _check_and_update_dataset(verbose: bool = False) -> None:
         stored = _load_stored_version()
         missing = any(
             not (
-                Path(_HERE) / "data_products" /
+                Path(_BASE_FOLDER) / "data_products" /
                 pol / f"pglis_{pol}_Z{z:02d}.csv"
             ).exists()
             for pol in ("Apos", "Aneg")

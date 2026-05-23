@@ -33,6 +33,7 @@ CSV column format (SSN):
 import os
 from datetime import datetime
 from pathlib import Path
+from platformdirs import user_data_dir
 
 import numpy as np
 import pandas as pd
@@ -42,8 +43,11 @@ from scipy.interpolate import make_interp_spline
 from pglis.utils_data_ssn import _update_ssn
 from pglis.utils_data_model import _check_and_update_dataset
 
+
 # paths to package directory and to data directory
-_HERE = os.path.dirname(os.path.abspath(__file__))
+# _BASE_FOLDER = os.path.dirname(os.path.abspath(__file__))
+_BASE_FOLDER = user_data_dir("pglis", appauthor=False)
+_DATA_FOLDER = Path(_BASE_FOLDER) / "data_products"
 
 # constants
 _YEAR_TO_S = 365.25 * 24.0 * 3600.0
@@ -67,7 +71,7 @@ _DELAY_TREF = _DELAY_TREF = 984_528_000.0  # 2001, 3, 14, 0, 0, 0
 
 def _join_path(*parts: str) -> str:
     """This function joins given directories into single path."""
-    return os.path.join(_HERE, *parts)
+    return os.path.join(_BASE_FOLDER, *parts)
 
 
 def _polarity_transition(
@@ -260,7 +264,7 @@ class solar_mod:
     """
 
     def __init__(self, data_dir: str | None = None):
-        self._data_dir = data_dir or _HERE
+        self._data_dir = data_dir or _BASE_FOLDER
 
         ssn_path = _join_path(self._data_dir, "data_products", "SSN.csv")
         self._ssn = _SSNTable(ssn_path)
@@ -473,5 +477,8 @@ class solar_mod:
 ##########################
 # run at import time
 ##########################
+if not os.path.exists(_DATA_FOLDER):
+    _DATA_FOLDER.mkdir(parents=True, exist_ok=True)
+
 _update_ssn(verbose=True)
 _check_and_update_dataset(verbose=True)
