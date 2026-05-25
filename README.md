@@ -4,15 +4,25 @@ __PgLis__ is a model developed to forecast the flux of solar-modulated galactic 
 
 We modelled the different transport parameters that cosmic rays experience as they traverse the heliosphere to arrive at Earth (__article link available soon__), parametrised them as functions of solar activity, using the widely available sunspot number as a proxy (see [NOAA](https://www.swpc.noaa.gov/products/solar-cycle-progression)), which we delay according to [Tomassetti et al. (2022)](https://doi.org/10.1103/PhysRevD.106.103022) to account for transport time.
 
+<p align="center">
+<img src="figs/Performances.png" alt="Nuclei fluxes" width="90%">
+</p>
+
 This allows us to estimate the fluxes of cosmic nuclei near Earth, from Hydrogen to Nickel, as they evolve with solar activity.
 
 <p align="center">
-<img src="figs/Prediction_longterm.png" alt="Prediction" width="500">
+<img src="figs/Prediction_longterm.png" alt="Prediction_AMS_PAMELA" width="45%">
+<img src="figs/Prediction_ACE.png" alt="Prediction_ACE" width="45%">
+<img src="figs/Prediction_AMS.png" alt="Prediction_AMS_SSN" width="90%">
 </p>
 
 This package is a Python implementation that interpolated between the pre-computed tables available in [Zenodo](https://doi.org/10.5281/zenodo.19607311).
 It downloads the data from [Zenodo](https://doi.org/10.5281/zenodo.19607311) and the sunspot numbers from [NOAA](https://www.swpc.noaa.gov/products/solar-cycle-progression).
 
+<p align="center">
+<img src="figs/model_heatmap_proton.png" alt="Model Heatmap" width="90%"><br>
+Flux model for both solar magnetic polarities, for cosmic hydrogen.
+</p>
 
 ## Background
 
