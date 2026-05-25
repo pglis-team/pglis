@@ -4,15 +4,9 @@ __PgLis__ is a model developed to forecast the flux of solar-modulated galactic 
 
 We modelled the different transport parameters that cosmic rays experience as they traverse the heliosphere to arrive at Earth (__article link available soon__), parametrised them as functions of solar activity, using the widely available sunspot number as a proxy (see [NOAA](https://www.swpc.noaa.gov/products/solar-cycle-progression)), which we delay according to [Tomassetti et al. (2022)](https://doi.org/10.1103/PhysRevD.106.103022) to account for transport time.
 
-<p align="center">
-<img src="figs/Performances.png" alt="Nuclei fluxes" width="90%">
-</p>
-
 This allows us to estimate the fluxes of cosmic nuclei near Earth, from Hydrogen to Nickel, as they evolve with solar activity.
 
 <p align="center">
-<img src="figs/Prediction_longterm.png" alt="Prediction_AMS_PAMELA" width="45%">
-<img src="figs/Prediction_ACE.png" alt="Prediction_ACE" width="45%">
 <img src="figs/Prediction_AMS.png" alt="Prediction_AMS_SSN" width="90%">
 </p>
 
@@ -50,6 +44,38 @@ t = datetime.datetime(2001, 6, 1).timestamp()
 
 # getting the flux as a dataframe
 df = model.get_dataframe_flux_vs_energy(Z=1, time=t)
+```
+
+# Installation
+
+## From GitHub
+
+To install this package you can run the following 3 commands:
+```bash
+# download the repository
+git clone git@github.com:davidpelosi21/PgLis.git
+
+# prepare the package for installation
+python3 -m build
+
+# install the package
+python3 -m pip install .
+```
+
+## From PyPi
+
+Coming soon...
+
+## Uninstalling the package
+
+To remove the package you must first remove the data, this can be done by running a command that comes bundled with the package:
+```bash
+pglis-cleanup
+```
+
+To uninstall the package, regardless of the data, you can simply run the following command:
+```bash
+python3 -m pip remove pglis
 ```
 
 # Authors

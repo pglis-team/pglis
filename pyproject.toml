@@ -40,7 +40,7 @@ Homepage = "https://github.com/davidpelosi21/PgLis"
 Issues = "https://github.com/davidpelosi21/PgLis/issues"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 
 [project.scripts]
 pglis-cleanup = "pglis.cleanup:main"

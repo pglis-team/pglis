@@ -3,5 +3,5 @@
 dist
 build
 pglis.egg-info
-pglis/data_products
-pglis/__pycache__
+src/pglis/data_products
+src/pglis/__pycache__
