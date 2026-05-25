@@ -98,7 +98,7 @@ Miguel Orcinha<sup>2</sup> [E-mail](mailto:orcinha@pg.infn.it)
 
 # How to cite
 
-__Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray Forecasting, Phys. Rev. D, (under review)__
+<!-- __Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray Forecasting, Phys. Rev. D, (under review)__ -->
 
 This package was created to simplify and systematise the access to the flux model presented in the article _Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray Forecasting, Phys. Rev. D, (under review)_.
 
