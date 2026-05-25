@@ -66,7 +66,7 @@ __Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray
 
 This package was created to simplify and systematise the access to the flux model presented in the article _Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray Forecasting, Phys. Rev. D, (under review)_.
 
-The heatmaps with the discretised model used in this package can be found in [Zenodo (doi:10.5281/zenodo.19607311)](https://zenodo.org/records/19971913).
+The heatmaps with the discretised model used in this package can be found in [Zenodo](https://zenodo.org/records/19971913).
 
 # Acknowledgements
 
