@@ -18,7 +18,7 @@ It downloads the data from [Zenodo](https://doi.org/10.5281/zenodo.19607311) and
 Flux model for both solar magnetic polarities, for cosmic hydrogen.
 </p>
 
-## Background
+## Scientific background
 
 The modulation of galactic cosmic rays, driven by the evolution of the heliospheric magnetic field, strongly influences the intensity of cosmic rays reaching near-Earth space. Characterizing this process is crucial both for advancing our understanding of cosmic ray transport and for assessing radiation exposure and related hazards in space environments.
 
@@ -106,4 +106,4 @@ The heatmaps with the discretised model used in this package can be found in [Ze
 
 # Acknowledgements
 
-This work as been developped with support from ASI, under ASI-UniPG 2019-2-HH.0, ASI-INFN 2019-19 HH.0, its amendment 2021-43 HH.0, the Italian Ministry of University and Research (MUR) through the program "Dipartimenti di Eccellenza 2023-2027" and FCT under grant 2024.00992.CERN, Portugal.
+This work as been developped with support from Agenzia Spaziale Italiana (ASI), under ASI-UniPG 2019-2-HH.0, ASI-INFN 2019-19 HH.0, its amendment 2021-43 HH.0, the Italian Ministry of University and Research (MUR) through the program "Dipartimenti di Eccellenza 2023-2027" and Fundação para a Ciência e Tecnologia (FCT) under grant 2024.00992.CERN, Portugal.
