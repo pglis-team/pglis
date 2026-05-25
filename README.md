@@ -6,7 +6,9 @@ We modelled the different transport parameters that cosmic rays experience as th
 
 This allows us to estimate the fluxes of cosmic nuclei near Earth, from Hydrogen to Nickel, as they evolve with solar activity.
 
+<p align="center">
 <img src="figs/Prediction_longterm.png" alt="Prediction" width="500">
+</p>
 
 This package is a Python implementation that interpolated between the pre-computed tables available in [Zenodo](https://doi.org/10.5281/zenodo.19607311).
 It downloads the data from [Zenodo](https://doi.org/10.5281/zenodo.19607311) and the sunspot numbers from [NOAA](https://www.swpc.noaa.gov/products/solar-cycle-progression).
@@ -49,7 +51,9 @@ David Pelosi<sup>1,2</sup>, Fernando Barão<sup>3,4</sup>, Bruna Bertucci<sup>1,
 <sup>3</sup> Laboratório de Instrumentação e Física Experimental de Partículas, Lisboa 1000, Portugal <br>
 <sup>4</sup> Instituto Superior Técnico, Lisboa 1049, Portugal <br>
 
+<p align="center">
 <img src="figs/logos.png" alt="PgLis Logo" width="500">
+</p>
 
 ## Maintainers
 
