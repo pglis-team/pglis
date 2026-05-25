@@ -70,4 +70,4 @@ The heatmaps with the discretised model used in this package can be found in [Ze
 
 # Acknowledgements
 
-This work as been developped with support from ASI, under ASI-UniPG 2019-2-HH.0, ASI-INFN 2019-19 HH.0, its amendment 2021-43 HH.0, the Italian Ministry of University and Research (MUR) through the program “Dipartimenti di Eccellenza 2023-2027” and FCT under grant 2024.00992.CERN, Portugal.
+This work as been developped with support from ASI, under ASI-UniPG 2019-2-HH.0, ASI-INFN 2019-19 HH.0, its amendment 2021-43 HH.0, the Italian Ministry of University and Research (MUR) through the program "Dipartimenti di Eccellenza 2023-2027" and FCT under grant 2024.00992.CERN, Portugal.
