@@ -4,5 +4,6 @@
   "autopep8.args": [
     "--indent-size=4",
     "--max-line-length=79"
-  ]
+  ],
+  "markdown.suggest.paths.enabled": false
 }
