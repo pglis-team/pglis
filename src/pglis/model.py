@@ -160,7 +160,7 @@ def _polarity_weights(time: float):
 # Genolini et al., 2023, arXiv:2307.06798v1
 # Alberto Oliva Presentation AMS-GM 19/09/2024
 
-# Entry format: Z: [(A1, abundance_percent), (A2, abundance_percent), ...]
+# Entry format: Z: [(A1, mass, abundance_percent), (A2, mass, abundance_percent), ...]
 
 
 _ISOTOPES: dict[int, list[tuple[int, float, float]]] = {
@@ -500,7 +500,7 @@ class solar_mod:
     # ----------------------------------
 
     def get_flux(
-        self, Z: int, Ekn: float, time: float, unit_label: str = "Ekn"
+        self, Z: int, unit: float, time: float, unit_label: str = "Ekn"
     ) -> float:
         """
         Compute differential flux J at a single (Z, Ekn, time) point.
@@ -510,7 +510,7 @@ class solar_mod:
         Z : int
             Atomic number of the species (1-28).
 
-        energy : float
+        unit : float
             If ``unit_label == 'Ekn``: kinetic energy per nucleon [MeV/n].
             If ``unit_label == 'Rig``: magnetic rigidity R [MV].
 
@@ -530,21 +530,21 @@ class solar_mod:
         if unit_label == "Rig":
             A = getA(Z)
             M = getM(Z)
-            Ekn = RigToEkn(Ekn, Z, A, M)
+            unit = RigToEkn(unit, Z, A, M)
 
         J = 0.0
         if w_pos > 0.0:
             tbl = self._get_table(Z, "pos")
-            J += w_pos * tbl.flux(ssn, Ekn)
+            J += w_pos * tbl.flux(ssn, unit)
         if w_neg > 0.0:
             tbl = self._get_table(Z, "neg")
-            J += w_neg * tbl.flux(ssn, Ekn)
+            J += w_neg * tbl.flux(ssn, unit)
 
         if unit_label == "Rig":
             # convert from J(Ekn) to J(Rig) using dE/dR
             A = getA(Z)
             M = getM(Z)
-            dE_dR = dEdR(Ekn, Z, A, M)
+            dE_dR = dEdR(unit, Z, A, M)
             J *= dE_dR
 
         return J
@@ -750,7 +750,8 @@ class solar_mod:
                 np.log10(Ekn_min), np.log10(Ekn_max), Ekn_npoints, endpoint
             )
         else:
-            Ekn_arr = np.linspace(Ekn_min, Ekn_max, Ekn_npoints, endpoint=endpoint)
+            Ekn_arr = np.linspace(
+                Ekn_min, Ekn_max, Ekn_npoints, endpoint=endpoint)
 
         J = self.get_array_flux_vs_energy(Z, Ekn_arr, time)
 
@@ -803,7 +804,8 @@ class solar_mod:
                 np.log10(Rig_min), np.log10(Rig_max), Rig_npoints, endpoint
             )
         else:
-            Rig_arr = np.linspace(Rig_min, Rig_max, Rig_npoints, endpoint=endpoint)
+            Rig_arr = np.linspace(
+                Rig_min, Rig_max, Rig_npoints, endpoint=endpoint)
 
         J = self.get_array_flux_vs_rigidity(Z, Rig_arr, time)
 
