@@ -72,7 +72,7 @@ pglis-cleanup
 
 To uninstall the package, regardless of the data, you can simply run the following command:
 ```bash
-python3 -m pip remove pglis
+python3 -m pip uninstall pglis
 ```
 
 # Authors
