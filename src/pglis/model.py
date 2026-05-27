@@ -31,7 +31,7 @@ CSV column format (SSN):
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from platformdirs import user_data_dir
 
@@ -92,7 +92,7 @@ def _in_reversal(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> boo
 
 
 def _unix_to_datetime(t: float) -> datetime:
-    return datetime.fromtimestamp(t)
+    return datetime.fromtimestamp(t, tz=timezone.utc)
 
 # Polarity sequence helper
 # ---------------------------------------------------------------------------
