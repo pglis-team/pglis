@@ -56,6 +56,7 @@ To install this package you can run the following 3 commands:
 git clone git@github.com:davidpelosi21/PgLis.git
 
 # prepare the package for installation
+python3 -m pip install build
 python3 -m build
 
 # install the package
