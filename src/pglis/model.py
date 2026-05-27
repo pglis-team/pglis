@@ -43,7 +43,6 @@ from scipy.interpolate import make_interp_spline
 from pglis.utils_data_ssn import _update_ssn
 from pglis.utils_data_model import _check_and_update_dataset
 
-
 # paths to package directory and to data directory
 # _BASE_FOLDER = os.path.dirname(os.path.abspath(__file__))
 _BASE_FOLDER = user_data_dir("pglis", appauthor=False)
@@ -93,6 +92,7 @@ def _in_reversal(t: float, center: float, half: float = 2.0 * _3MONTHS_S) -> boo
 
 def _unix_to_datetime(t: float) -> datetime:
     return datetime.fromtimestamp(t, tz=timezone.utc)
+
 
 # Polarity sequence helper
 # ---------------------------------------------------------------------------
@@ -153,6 +153,214 @@ def _polarity_weights(time: float):
     else:
         # after 2025 rev -> pure negative (valid ~to 2031)
         return 0.0, 1.0
+
+
+# isotopic composition of elements (Z=1 to Z=28)
+# Meija et al., 2019, 10.1515/pac-2015-0503
+# Genolini et al., 2023, arXiv:2307.06798v1
+# Alberto Oliva Presentation AMS-GM 19/09/2024
+
+# Entry format: Z: [(A1, abundance_percent), (A2, abundance_percent), ...]
+
+
+_ISOTOPES: dict[int, list[tuple[int, float, float]]] = {
+    1: [  # H
+        (1, 938.7830734839999, 100.0),
+    ],
+    2: [  # He
+        (3, 2809.41352614, 14.0),
+        (4, 3728.40132555, 86.0),
+    ],
+    3: [  # Li
+        (6, 5603.051494920001, 49.0),
+        (7, 6535.36582194, 51.0),
+    ],
+    4: [  # Be
+        (7, 6536.22771694, 58.0),
+        (9, 8394.79537178, 33.0),
+        (10, 9327.5485142, 9.0),
+    ],
+    5: [  # B
+        (10, 9326.9916352, 30.0),
+        (11, 10255.10283462, 70.0),
+    ],
+    6: [  # C
+        (12, 11177.92922904, 90.0),
+        (13, 12112.54834076, 9.97),
+        (14, 13043.937326880001, 0.03),
+    ],
+    7: [  # N
+        (14, 13043.780850680001, 51.0),
+        (15, 13972.5129744, 49.0),
+    ],
+    8: [  # O
+        (16, 14899.16863662, 98.0),
+        (17, 15834.59097694, 1.0),
+        (18, 16766.111027259998, 1.0),
+    ],
+    9: [  # F
+        (19, 17696.90050088, 100.0),
+    ],
+    10: [  # Ne
+        (20, 18622.840116199997, 61.0),
+        (21, 19555.644370820002, 10.0),
+        (22, 20484.84553724, 29.0),
+    ],
+    11: [  # Na
+        (23, 21414.83450216, 100.0),
+    ],
+    12: [  # Mg
+        (24, 22341.92488008, 74.0),
+        (25, 23274.1597805, 13.0),
+        (26, 24202.632118920003, 13.0),
+    ],
+    13: [  # Al
+        (26, 24206.636522920002, 9.0),
+        (27, 25133.14390534, 91.0),
+    ],
+    14: [  # Si
+        (28, 26060.34207066, 90.0),
+        (29, 26991.43388868, 6.0),
+        (30, 27920.3901106, 4.0),
+    ],
+    15: [  # P
+        (31, 28851.876630619998, 100.0),
+    ],
+    16: [  # S
+        (32, 29781.79574034, 94.850),
+        (33, 30712.71952156, 0.763),
+        (34, 31640.867792279998, 4.365),
+        (36, 33503.12354712, 0.0158),
+    ],
+    17: [  # Cl
+        (35, 32573.2800547, 75.8),
+        (37, 34433.52023954, 24.2),
+    ],
+    18: [  # Ar
+        (36, 33503.55614512, 0.3336),
+        (38, 35362.061061960005, 0.0629),
+        (40, 37224.724196799994, 99.6035),
+    ],
+    19: [  # K
+        (39, 36294.462799379995, 93.2581),
+        (40, 37226.2285968, 0.0117),
+        (41, 38155.69865022, 6.7302),
+    ],
+    20: [  # Ca
+        (40, 37224.917694799995, 96.941),
+        (42, 39084.20501164, 0.647),
+        (43, 40015.83753406, 0.135),
+        (44, 40944.27180648, 2.086),
+        (46, 42805.58911132, 0.004),
+        (48, 44667.492048160006, 0.187),
+    ],
+    21: [  # Sc
+        (45, 41876.1623089, 100.0),
+    ],
+    22: [  # Ti
+        (46, 42804.60044132, 8.25),
+        (47, 43735.28520374, 7.44),
+        (48, 44663.22396616, 73.72),
+        (49, 45594.647008579996, 5.41),
+        (50, 46523.273251, 5.18),
+    ],
+    23: [  # V
+        (50, 46525.481881, 0.25),
+        (51, 47453.99611342, 99.75),
+    ],
+    24: [  # Cr
+        (50, 46524.443761, 4.345),
+        (52, 48382.27381584, 83.789),
+        (53, 49313.899808259994, 9.501),
+        (54, 50243.746150679995, 2.365),
+    ],
+    25: [  # Mn
+        (55, 51174.4630931, 100.0),
+    ],
+    26: [  # Fe
+        (54, 50244.42693068, 5.845),
+        (56, 52103.06257552, 91.754),
+        (57, 53034.98181794, 2.119),
+        (58, 53964.50264036, 0.282),
+    ],
+    27: [  # Co
+        (59, 54895.92224278, 100.0),
+    ],
+    28: [  # Ni
+        (58, 53966.429040359995, 68.0769),
+        (60, 55825.1729452, 26.2231),
+        (61, 56756.91824762, 1.1399),
+        (62, 57685.88795003999, 3.6345),
+        (64, 59548.52355488, 0.9256),
+    ],
+}
+
+
+def getM(Z: int) -> float:
+    """Return the abundance-weighted mean atomic mass [MeV] for atomic number Z.
+    Valid for Z = 1 (hydrogen) to Z = 28 (nickel).
+
+
+    Parameters
+    ----------
+    Z : int
+        Atomic number
+
+    Returns
+    -------
+    float
+        f_i = abundance_percent, M_i = atomic mass [MeV] for each isotope.
+        <M> = sum(M_i * f_i) / sum(f_i)   [MeV]
+
+    Raises
+    ------
+    KeyError
+        If Z is outside the range [1, 28].
+    """
+    if Z not in _ISOTOPES:
+        raise KeyError(f"Z={Z} is not available; supported range is 1-28.")
+    isotopes = _ISOTOPES[Z]
+    norm = sum(f for _, _, f in isotopes)
+    return sum(M * f for _, M, f in isotopes) / norm
+
+
+def getA(Z: int) -> float:
+    """Return the abundance-weighted mean mass number A for atomic number Z.
+    Valid for Z = 1 (hydrogen) to Z = 28 (nickel).
+
+    Parameters
+    ----------
+    Z : int
+        Atomic number (proton number).
+
+    Returns
+    -------
+    float
+        f_i = abundance_percent for each isotope, A_i = mass number for each isotope.
+        Abundance-weighted mean mass number A = sum(A_i * f_i) / sum(f_i).
+
+    Raises
+    ------
+    KeyError
+        If Z is outside the range [1, 28].
+    """
+    if Z not in _ISOTOPES:
+        raise KeyError(f"Z={Z} is not available; supported range is 1-28.")
+
+    isotopes = _ISOTOPES[Z]
+    total_abundance = sum(f for _, _, f in isotopes)
+    return sum(A * f for A, _, f in isotopes) / total_abundance
+
+
+# helpers for ekn/n to rig conversion
+def RigToEkn(Rig: float, Z: int, A: float, M: float) -> float:
+    """Kinetic energy per nucleon Ekn [MeV/n] from rigidity R [MV]."""
+    return (np.sqrt((Rig * Z) * (Rig * Z) + M * M) - M) / A
+
+
+def dEdR(Ekn: float, Z: int, A: float, M: float) -> float:
+    beta = np.sqrt(A * Ekn * (A * Ekn + 2.0 * M)) / (A * Ekn + M)
+    return Z * beta / A
 
 
 # --------------------------------------------------------------------------
@@ -233,10 +441,7 @@ class _SSNTable:
         s_col = df.columns[1]
         times = df[t_col].values.astype(float)
         ssn = df[s_col].values.astype(float)
-
-        self._interp = make_interp_spline(
-            times, ssn, k=1
-        )
+        self._interp = make_interp_spline(times, ssn, k=1)
 
     def eval(self, t: float | np.ndarray) -> float:
         return self._interp(t)
@@ -294,7 +499,9 @@ class solar_mod:
     # Public API
     # ----------------------------------
 
-    def get_flux(self, Z: int, Ekn: float, time: float) -> float:
+    def get_flux(
+        self, Z: int, Ekn: float, time: float, unit_label: str = "Ekn"
+    ) -> float:
         """
         Compute differential flux J at a single (Z, Ekn, time) point.
 
@@ -302,18 +509,28 @@ class solar_mod:
         ----------
         Z : int
             Atomic number of the species (1-28).
-        Ekn : float
-            Kinetic energy per nucleon [MeV/n].
+
+        energy : float
+            If ``unit_label == 'Ekn``: kinetic energy per nucleon [MeV/n].
+            If ``unit_label == 'Rig``: magnetic rigidity R [MV].
+
         time : float
             Unix timestamp [seconds].
 
         Returns
         -------
         float
-            Differential flux J [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}].
+              If ``unit_label == 'Ekn``: Differential flux J [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}].
+              If ``unit_label == 'Rig``: Differential flux J [MV^{-1} sr^{-1} s^{-1} m^{-2}].
         """
         ssn = self._ssn_at(time)
         w_pos, w_neg = _polarity_weights(time)
+
+        # from rig to ekn
+        if unit_label == "Rig":
+            A = getA(Z)
+            M = getM(Z)
+            Ekn = RigToEkn(Ekn, Z, A, M)
 
         J = 0.0
         if w_pos > 0.0:
@@ -323,33 +540,64 @@ class solar_mod:
             tbl = self._get_table(Z, "neg")
             J += w_neg * tbl.flux(ssn, Ekn)
 
+        if unit_label == "Rig":
+            # convert from J(Ekn) to J(Rig) using dE/dR
+            A = getA(Z)
+            M = getM(Z)
+            dE_dR = dEdR(Ekn, Z, A, M)
+            J *= dE_dR
+
         return J
 
     def get_array_flux_vs_time(
         self,
         Z: int,
-        Ekn: float,
         times: np.ndarray,
+        **kwargs,
     ) -> np.ndarray:
         """
-        Compute flux J(t) for a fixed species and energy over an array of times.
+        Compute flux J(t) for a fixed species and energy (or rigidity) over an array of times.
 
         Parameters
         ----------
         Z : int
             Atomic number.
-        Ekn : float
-            Kinetic energy per nucleon [MeV/n].
         times : array-like
             Unix timestamps [s].
+        Ekn : float, optional
+            Kinetic energy per nucleon [MeV/n].
+        Rig : float, optional
+            Magnetic rigidity [MV].
 
         Returns
         -------
         np.ndarray
-            Flux values [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}], same length as ``times``.
+            Flux values, same length as ``times``.
+            Units: [MeV/n^{-1} sr^{-1} s^{-1} m^{-2}] if Ekn, [MV^{-1} sr^{-1} s^{-1} m^{-2}] if Rig.
+
+        Raises
+        ------
+        ValueError
+            If neither or both of Ekn/Rig are provided.
+
+        Examples
+        --------
+        >>> model.get_array_flux_vs_time(Z=1, Ekn=1000.0, times=times)
+        >>> model.get_array_flux_vs_time(Z=1, Rig=1000.0, times=times)
         """
+        if "Ekn" in kwargs and "Rig" in kwargs:
+            raise ValueError("Provide either Ekn or Rig, not both.")
+        if "Ekn" not in kwargs and "Rig" not in kwargs:
+            raise ValueError("Provide one of: Ekn=<float> or Rig=<float>.")
+
         times = np.asarray(times, dtype=np.float64)
-        return np.array([self.get_flux(Z, Ekn, t) for t in times])
+
+        if "Ekn" in kwargs:
+            energy, label = kwargs["Ekn"], "Ekn"
+        else:
+            energy, label = kwargs["Rig"], "Rig"
+
+        return np.array([self.get_flux(Z, energy, t, label) for t in times])
 
     def get_array_flux_vs_energy(
         self,
@@ -377,59 +625,99 @@ class solar_mod:
         Ekn_arr = np.asarray(Ekn_arr, dtype=np.float64)
         return np.array([self.get_flux(Z, e, time) for e in Ekn_arr])
 
-    def get_dataframe_flux_vs_time(self,
-                                   Z: int,
-                                   Ekn: float,
-                                   t_start: float, t_end: float,
-                                   t_delta=2592000.,  # 1 month per datapoint
-                                   endpoint: bool = True
-                                   ) -> pd.DataFrame:
+    def get_array_flux_vs_rigidity(
+        self,
+        Z: int,
+        Rig_arr: np.ndarray,
+        time: float,
+    ) -> np.ndarray:
         """
-        Compute J(t) for a fixed species and kinetic energy over a time range.
+        Compute the differential energy spectrum J(Ekn) at a fixed time.
 
         Parameters
         ----------
-        model : solar_mod
+        Z : int
+            Atomic number.
+        Rig_arr : array-like
+            rigidities [MV].
+        time : float
+            Unix timestamp [s].
+
+        Returns
+        -------
+        np.ndarray
+            Flux values [MV^{-1} sr^{-1} s^{-1} m^{-2}], same length as ``Rig_arr``.
+        """
+        Rig_arr = np.asarray(Rig_arr, dtype=np.float64)
+        return np.array([self.get_flux(Z, e, time, unit_label="Rig") for e in Rig_arr])
+
+    def get_dataframe_flux_vs_time(
+        self,
+        Z: int,
+        t_start: float,
+        t_end: float,
+        t_delta: float = 2592000.0,  # 1 month per datapoint
+        endpoint: bool = True,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """
+        Compute J(t) for a fixed species and kinetic energy (or rigidity) over a time range.
+
+        Parameters
+        ----------
         Z : int
             Atomic number (1-28).
-        Ekn : float
-            Kinetic energy per nucleon [MeV/n].
         t_start, t_end : float
             Time range as Unix timestamps [s].
         t_delta : float
             Time between fluxes as Unix timestamps [s].
-        endpoint: str (default = True)
-            Include the end point. Array of times considered is [t_start; t_end] if true and [t_start; t_end) otherwise.
+        endpoint : bool (default = True)
+            Include the end point. Array of times considered is [t_start; t_end]
+            if True and [t_start; t_end) otherwise.
+        Ekn : float, optional
+            Kinetic energy per nucleon [MeV/n].
+        Rig : float, optional
+            Magnetic rigidity [MV].
+
         Returns
         -------
         pandas.DataFrame with columns:
             time_unix     - Unix timestamp [s]
             datetime_utc  - UTC datetime string (ISO-8601)
-            J             - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
-        """
-        # npoints number of months between t_start and t_end
-        n_points = int((t_end - t_start) / t_delta)
+            J             - Differential flux [MeV/n^-1 sr^-1 s^-1 m^-2] if Ekn,
+                            [MV^-1 sr^-1 s^-1 m^-2] if Rig.
 
+        Examples
+        --------
+        >>> model.get_dataframe_flux_vs_time(Z=1, Ekn=1000.0, t_start=t0, t_end=t1)
+        >>> model.get_dataframe_flux_vs_time(Z=1, Rig=1000.0, t_start=t0, t_end=t1)
+        """
+        n_points = int((t_end - t_start) / t_delta)
         times = np.linspace(t_start, t_end, n_points, endpoint=endpoint)
-        J = self.get_array_flux_vs_time(Z, Ekn, times)
+
+        J = self.get_array_flux_vs_time(Z, times=times, **kwargs)
 
         return pd.DataFrame(
             {
-                "time_unix": times,  # for math
-                "datetime_utc": [_unix_to_datetime(t).isoformat() for t in times],
-                "J[MeV/n^(-1) sr^(-1) s^(-1) m^(-2)]": J,
+                "time_unix": times,
+                "datetime_utc": [
+                    datetime.utcfromtimestamp(t).strftime("%Y-%m-%dT%H:%M:%SZ")
+                    for t in times
+                ],
+                "J": J,
             }
         )
 
-    def get_dataframe_flux_vs_energy(self,
-                                     Z: int,
-                                     time: float,
-                                     Ekn_min: float = 10.0,
-                                     Ekn_max: float = 1e5,
-                                     Ekn_npoints: int = 200,
-                                     sampling: str = "log10",
-                                     endpoint: bool = True
-                                     ) -> pd.DataFrame:
+    def get_dataframe_flux_vs_energy(
+        self,
+        Z: int,
+        time: float,
+        Ekn_min: float = 10.0,
+        Ekn_max: float = 1e5,
+        Ekn_npoints: int = 200,
+        sampling: str = "log10",
+        endpoint: bool = True,
+    ) -> pd.DataFrame:
         """
         Compute the differential energy spectrum J(Ekn) at a fixed time.
 
@@ -454,15 +742,15 @@ class solar_mod:
         -------
         pandas.DataFrame with columns:
             Ekn  - Kinetic energy per nucleon [MeV/n]
-            J    - Differential flux [MeV/n⁻¹ sr⁻¹ s⁻¹ m⁻²]
+            J    - Differential flux [MeV/n^-1 sr^-1 s^-1 m^-2]
         """
 
         if sampling == "log" or sampling == "log10":
-            Ekn_arr = np.logspace(np.log10(Ekn_min), np.log10(
-                Ekn_max), Ekn_npoints, endpoint)
+            Ekn_arr = np.logspace(
+                np.log10(Ekn_min), np.log10(Ekn_max), Ekn_npoints, endpoint
+            )
         else:
-            Ekn_arr = np.linspace(
-                Ekn_min, Ekn_max, Ekn_npoints, endpoint=endpoint)
+            Ekn_arr = np.linspace(Ekn_min, Ekn_max, Ekn_npoints, endpoint=endpoint)
 
         J = self.get_array_flux_vs_energy(Z, Ekn_arr, time)
 
@@ -470,6 +758,59 @@ class solar_mod:
             {
                 "Ekn[MeV/n]": Ekn_arr,
                 "J[MeV/n^(-1) sr^(-1) s^(-1) m^(-2)]": J,
+            }
+        )
+
+    def get_dataframe_flux_vs_rigidity(
+        self,
+        Z: int,
+        time: float,
+        Rig_min: float = 40.0,
+        Rig_max: float = 2e5,
+        Rig_npoints: int = 200,
+        sampling: str = "log10",
+        endpoint: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Compute the differential rigidity spectrum J(Rig) at a fixed time.
+
+        Parameters
+        ----------
+        model : solar_mod
+        Z : int
+            Atomic number (1-28).
+        time : float
+            Unix timestamp [s].
+        Rig_min, Rig_max : float
+            Rigidity range [MeV/n] (logarithmically sampled). [min 40 MV to max 200 GV]
+        Rig_npoints : int
+            Number of energy samples.
+        sampling : str (default = log10)
+            "log10" or "log" for logarithmic sampling
+            "linear" for linear sampling
+        endpoint: str (default = True)
+            Include the end point. Array of energies considered is [Rig_min; Rig_max] if true and [Rig_min; Rig_max) otherwise.
+
+        Returns
+        -------
+        pandas.DataFrame with columns:
+            Rig  - Magnetic rigidity [MV]
+            J    - Differential flux [MV^-1 sr^-1 s^-1 m^-2]
+        """
+
+        if sampling == "log" or sampling == "log10":
+            Rig_arr = np.logspace(
+                np.log10(Rig_min), np.log10(Rig_max), Rig_npoints, endpoint
+            )
+        else:
+            Rig_arr = np.linspace(Rig_min, Rig_max, Rig_npoints, endpoint=endpoint)
+
+        J = self.get_array_flux_vs_rigidity(Z, Rig_arr, time)
+
+        return pd.DataFrame(
+            {
+                "Rig[MV]": Rig_arr,
+                "J[MV^(-1) sr^(-1) s^(-1) m^(-2)]": J,
             }
         )
 
