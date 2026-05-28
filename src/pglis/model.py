@@ -34,6 +34,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 from platformdirs import user_data_dir
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -80,7 +81,7 @@ def _polarity_transition(
     return 1.0 / (1.0 + np.exp((time - time_reversal) / time_delta))
 
 
-def _time_delay(t: float | np.ndarray) -> float | np.ndarray:
+def _time_delay(t: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
     """Time delay from Tomassetti(2022)."""
     time = (t - _DELAY_TREF) - _TP
     return _TM + _TA * np.cos(2.0 * np.pi * time / _T0)
@@ -443,7 +444,7 @@ class _SSNTable:
         ssn = df[s_col].values.astype(float)
         self._interp = make_interp_spline(times, ssn, k=1)
 
-    def eval(self, t: float | np.ndarray) -> float:
+    def eval(self, t: Union[float, np.ndarray]) -> float:
         return self._interp(t)
 
 
@@ -468,7 +469,7 @@ class solar_mod:
     >>> J = model.flux(Z=1, Ekn=1000.0, time=1_000_000_000)
     """
 
-    def __init__(self, data_dir: str | None = None):
+    def __init__(self, data_dir: Union[str, None] = None):
         self._data_dir = data_dir or _BASE_FOLDER
 
         ssn_path = _join_path(self._data_dir, "data_products", "SSN.csv")

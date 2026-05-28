@@ -8,6 +8,7 @@ import urllib.request
 import urllib.error
 import json
 from platformdirs import user_data_dir
+from typing import Union
 
 # paths to package directory and to data directory
 _BASE_FOLDER = user_data_dir("pglis", appauthor=False)
@@ -20,7 +21,7 @@ _ZENODO_BASE = f"https://zenodo.org/api/records/{_ZENODO_VERSION}/files"
 _VERSION_FILE = _DATA_FOLDER / ".zenodo_version"
 
 
-def _get_latest_version(verbose: bool = False) -> str | None:
+def _get_latest_version(verbose: bool = False) -> Union[None, str]:
     """
     Query the Zenodo API for the latest version record ID of the concept DOI.
 
@@ -50,7 +51,7 @@ def _get_latest_version(verbose: bool = False) -> str | None:
         return None
 
 
-def _load_stored_version() -> str | None:
+def _load_stored_version() -> Union[None, str]:
     """Read the version string saved in data_products/.zenodo_version."""
     try:
         return _VERSION_FILE.read_text().strip()
@@ -65,8 +66,8 @@ def _save_stored_version(version: str) -> None:
 
 
 def update_dataset(
-    Z: int | list[int] | None = None,
-    polarity: str | list[str] | None = None,
+    Z: Union[int, list[int], None] = None,
+    polarity: Union[str, list[str], None] = None,
     verbose: bool = False,
 ) -> bool:
     """
