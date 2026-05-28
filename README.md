@@ -9,14 +9,14 @@ We modelled the different transport parameters that cosmic rays experience as th
 This allows us to estimate the fluxes of cosmic nuclei near Earth, from Hydrogen to Nickel, as they evolve with solar activity.
 
 <p align="center">
-<img src="figs/Prediction_AMS.png" alt="Prediction_AMS_SSN" width="90%">
+<img src="https://raw.githubusercontent.com/pglis-team/pglis/621e2e747e8adb6c0b9600785444a939ff7b176f/figs/Prediction_AMS.png" alt="Prediction_AMS_SSN" width="90%">
 </p>
 
 This package is a Python implementation that interpolated between the pre-computed tables available in [Zenodo](https://doi.org/10.5281/zenodo.19607311).
 It downloads the data from [Zenodo](https://doi.org/10.5281/zenodo.19607311) and the sunspot numbers from [NOAA](https://www.swpc.noaa.gov/products/solar-cycle-progression).
 
 <p align="center">
-<img src="figs/model_heatmap_proton.png" alt="Model Heatmap" width="90%"><br>
+<img src="https://raw.githubusercontent.com/pglis-team/pglis/621e2e747e8adb6c0b9600785444a939ff7b176f/figs/model_heatmap_proton.png" alt="Model Heatmap" width="90%"><br>
 Flux model for both solar magnetic polarities, for cosmic hydrogen.
 </p>
 
@@ -34,7 +34,7 @@ It demonstrates a demonstrably good performance across a broad multichannel and 
 
 # Usage examples
 
-More examples can be found in [examples.ipynb](examples.ipynb).
+More examples can be found in [tutorial.ipynb](tutorial.ipynb).
 
 ## Getting the flux for a given time
 ```python3
@@ -52,7 +52,7 @@ df = model.get_dataframe_flux_vs_energy(Z=1, time=t)
 
 ## From GitHub
 
-To install this package you can run the following 3 commands:
+To install this package you can run the following commands:
 ```bash
 # download the repository
 git clone git@github.com:davidpelosi21/PgLis.git
@@ -62,8 +62,9 @@ python3 -m pip install .
 ```
 
 ## From PyPi
-
-Coming soon...
+```bash
+python3 -m pip install pglis
+```
 
 ## Uninstalling the package
 
@@ -87,7 +88,7 @@ David Pelosi<sup>1,2</sup>, Fernando Barão<sup>3,4</sup>, Bruna Bertucci<sup>1,
 <sup>4</sup> Instituto Superior Técnico, Lisboa 1049, Portugal <br>
 
 <p align="center">
-<img src="figs/logos.png" alt="PgLis Logo" width="500">
+<img src="https://raw.githubusercontent.com/pglis-team/pglis/621e2e747e8adb6c0b9600785444a939ff7b176f/figs/logos.png" alt="PgLis Logo" width="500">
 </p>
 
 ## Maintainers
