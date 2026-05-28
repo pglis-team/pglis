@@ -1,4 +1,6 @@
 # The PgLis model
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19607311-blue)](https://doi.org/10.5281/zenodo.19607311)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 __PgLis__ is a model developed to forecast the flux of solar-modulated galactic cosmic-rays near Earth.
 
