@@ -36,7 +36,7 @@ It demonstrates a demonstrably good performance across a broad multichannel and 
 
 # Usage examples
 
-More examples can be found in [tutorial.ipynb](tutorial.ipynb).
+More examples can be found in the [tutorial](https://github.com/pglis-team/pglis/blob/main/tutorial.ipynb).
 
 ## Getting the flux for a given time
 ```python3
