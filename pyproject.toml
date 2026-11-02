@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pglis"
-version = "1.0.3"
+version = "1.0.4"
 description = "PGLIS solar-modulated galactic cosmic-ray flux model"
 
 authors = [
