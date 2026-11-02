@@ -4,7 +4,8 @@
 [![Python versions](https://img.shields.io/badge/python-3.9+-blue)]()
 
 
-__PgLis__ is a model developed to forecast the flux of solar-modulated galactic cosmic-rays near Earth.
+__PgLis__ is a model developed to forecast the flux of solar-modulated galactic cosmic-rays near Earth. This package was created to simplify and systematise the access to the flux model presented in the article __Pelosi et al. (2026) New model for long-term forecasting of galactic cosmic rays, Phys. Rev. D 114, 063005, [DOI:10.1103/npfk-lwy9](https://doi.org/10.1103/npfk-lwy9)__.
+
 
 We modelled the different transport parameters that cosmic rays experience as they traverse the heliosphere to arrive at Earth (__article link available soon__), parametrised them as functions of solar activity, using the widely available sunspot number as a proxy (see [NOAA](https://www.swpc.noaa.gov/products/solar-cycle-progression)), which we delay according to [Tomassetti et al. (2022)](https://doi.org/10.1103/PhysRevD.106.103022) to account for transport time.
 
@@ -100,9 +101,7 @@ Miguel Orcinha<sup>2</sup> [E-mail](mailto:orcinha@pg.infn.it)
 
 # How to cite
 
-<!-- __Pelosi et al. (2026) New model for long-term forecasting of galactic cosmic rays, Phys. Rev. D, (under review)__ -->
-
-This package was created to simplify and systematise the access to the flux model presented in the article _Pelosi et al. (2026) New model for long-term forecasting of galactic cosmic rays, Phys. Rev. D 114, 063005, DOI:10.1103/npfk-lwy9_.
+If you find this package useful and use it in your work, please cite the publication that it's based on, __Pelosi et al. (2026) New model for long-term forecasting of galactic cosmic rays, Phys. Rev. D 114, 063005, [DOI:10.1103/npfk-lwy9](https://doi.org/10.1103/npfk-lwy9)__.
 
 The heatmaps with the discretised model used in this package can be found in [Zenodo](https://zenodo.org/records/19971913).
 
