@@ -57,7 +57,7 @@ df = model.get_dataframe_flux_vs_energy(Z=1, time=t)
 To install this package you can run the following commands:
 ```bash
 # download the repository
-git clone git@github.com:davidpelosi21/PgLis.git
+git clone https://github.com/pglis-team/pglis.git
 
 # install the package
 python3 -m pip install .
@@ -100,9 +100,9 @@ Miguel Orcinha<sup>2</sup> [E-mail](mailto:orcinha@pg.infn.it)
 
 # How to cite
 
-<!-- __Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray Forecasting, Phys. Rev. D, (under review)__ -->
+<!-- __Pelosi et al. (2026) New model for long-term forecasting of galactic cosmic rays, Phys. Rev. D, (under review)__ -->
 
-This package was created to simplify and systematise the access to the flux model presented in the article _Pelosi et al. (2026) The PgLis Model: A Tool for Long-Term Galactic Cosmic Ray Forecasting, Phys. Rev. D, (under review)_.
+This package was created to simplify and systematise the access to the flux model presented in the article _Pelosi et al. (2026) New model for long-term forecasting of galactic cosmic rays, Phys. Rev. D 114, 063005, DOI:10.1103/npfk-lwy9_.
 
 The heatmaps with the discretised model used in this package can be found in [Zenodo](https://zenodo.org/records/19971913).
 
